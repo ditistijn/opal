@@ -1,0 +1,55 @@
+[package]
+name = "opal"
+version = "0.1.0"
+description = "Opal — a native macOS AI desktop client with chat, Projects and Artifacts, powered by OpenCode."
+authors = ["ditistijn"]
+edition = "2024"
+
+[lib]
+name = "opal_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["macos-private-api", "devtools"] }
+tauri-plugin-opener = "2"
+tauri-plugin-shell = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-process = "2"
+tauri-plugin-os = "2"
+tauri-plugin-log = "2"
+tauri-plugin-window-state = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+anyhow = "1"
+thiserror = "2"
+rand = "0.9"
+dirs = "6"
+mime_guess = "2"
+notify = "8"
+notify-debouncer-full = "0.5"
+uuid = { version = "1", features = ["v4"] }
+chrono = "0.4"
+log = "0.4"
+reqwest = { version = "0.12", features = ["json"] }
+walkdir = "2"
+fs_extra = "1"
+which = "7"
+percent-encoding = "2"
+libc = "0.2"
+tauri-plugin-updater = "2"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+objc2-app-kit = { version = "0.3", features = ["NSWindow", "NSApplication"] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+panic = "abort"
+strip = true

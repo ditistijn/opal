@@ -1,0 +1,168 @@
+/* Prose styles for assistant messages — comfortable rhythm, token-driven colors. */
+.opal-md {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+.opal-md > :first-child {
+  margin-top: 0;
+}
+.opal-md > :last-child {
+  margin-bottom: 0;
+}
+.opal-md p {
+  margin: 0 0 0.85em;
+}
+.opal-md h1,
+.opal-md h2,
+.opal-md h3,
+.opal-md h4 {
+  font-weight: 600;
+  line-height: 1.35;
+  margin: 1.4em 0 0.5em;
+}
+.opal-md h1 {
+  font-size: 1.3em;
+}
+.opal-md h2 {
+  font-size: 1.18em;
+}
+.opal-md h3 {
+  font-size: 1.05em;
+}
+.opal-md h4 {
+  font-size: 1em;
+}
+.opal-md ul,
+.opal-md ol {
+  margin: 0 0 0.9em;
+  padding-left: 1.6em;
+}
+.opal-md ul {
+  list-style: disc;
+}
+.opal-md ol {
+  list-style: decimal;
+}
+.opal-md li {
+  margin: 0.25em 0;
+  padding-left: 0.2em;
+}
+.opal-md li > p {
+  margin: 0;
+}
+.opal-md li::marker {
+  color: var(--fg-muted);
+}
+.opal-md strong {
+  font-weight: 600;
+}
+.opal-md a {
+  color: var(--fg);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.opal-md a:hover {
+  text-decoration-color: var(--fg-secondary);
+}
+.opal-md blockquote {
+  margin: 0 0 0.9em;
+  padding-left: 1em;
+  border-left: 3px solid var(--border-strong);
+  color: var(--fg-secondary);
+}
+.opal-md hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 1.5em 0;
+}
+.opal-md img {
+  max-width: 100%;
+  border-radius: var(--radius);
+}
+.opal-md .opal-inline-code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  padding: 0.12em 0.36em;
+  border-radius: 5px;
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
+  color: var(--danger);
+}
+.opal-md .opal-table {
+  overflow-x: auto;
+  margin: 0 0 1em;
+}
+.opal-md table {
+  border-collapse: collapse;
+  font-size: 14px;
+  min-width: 50%;
+}
+.opal-md th,
+.opal-md td {
+  border-bottom: 1px solid var(--border);
+  padding: 0.45em 0.9em 0.45em 0;
+  text-align: left;
+}
+.opal-md th {
+  font-weight: 600;
+  border-bottom-color: var(--border-strong);
+}
+.opal-md th[align="right"],
+.opal-md td[align="right"] {
+  text-align: right;
+}
+.opal-md input[type="checkbox"] {
+  margin-right: 0.4em;
+}
+
+/* code blocks */
+.opal-code pre {
+  margin: 0;
+  padding: 12px 14px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  background: transparent !important;
+}
+.opal-code pre code {
+  font-family: inherit;
+}
+.opal-code .shiki,
+.opal-code .shiki span {
+  color: var(--shiki-light);
+}
+:root[data-theme="dark"] .opal-code .shiki,
+:root[data-theme="dark"] .opal-code .shiki span {
+  color: var(--shiki-dark);
+}
+
+/* streaming caret after the last text block */
+@keyframes opal-caret {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.15;
+  }
+}
+.opal-streaming > p:last-child::after,
+.opal-streaming > ul:last-child > li:last-child::after,
+.opal-streaming > ol:last-child > li:last-child::after,
+.opal-streaming > h1:last-child::after,
+.opal-streaming > h2:last-child::after,
+.opal-streaming > h3:last-child::after {
+  content: "";
+  display: inline-block;
+  width: 0.55em;
+  height: 0.55em;
+  margin-left: 0.3em;
+  border-radius: 999px;
+  background: var(--accent);
+  vertical-align: 0.05em;
+  animation: opal-caret 1s ease-in-out infinite;
+}

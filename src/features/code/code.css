@@ -1,0 +1,70 @@
+/* Code surface: diff tables, file viewer gutters, xterm host. Token-driven (no hardcoded colors). */
+
+.opal-diff-line td {
+  vertical-align: top;
+}
+.opal-diff-no {
+  width: 40px;
+  min-width: 40px;
+  padding: 0 8px 0 4px;
+  text-align: right;
+  color: var(--fg-faint);
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+}
+.opal-diff-sign {
+  width: 14px;
+  padding-right: 4px;
+  user-select: none;
+  color: var(--fg-faint);
+}
+.opal-diff-code {
+  white-space: pre;
+  padding-right: 12px;
+  color: var(--fg);
+}
+.opal-diff-half {
+  white-space: pre-wrap;
+  word-break: break-all;
+  padding-left: 6px;
+}
+.opal-diff-line.is-add td,
+.opal-diff-line td.is-add {
+  background: color-mix(in srgb, var(--success) 11%, transparent);
+}
+.opal-diff-line.is-del td,
+.opal-diff-line td.is-del {
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
+.opal-diff-line.is-add .opal-diff-sign {
+  color: var(--success);
+}
+.opal-diff-line.is-del .opal-diff-sign {
+  color: var(--danger);
+}
+.opal-diff-line td.is-empty {
+  background: var(--bg-muted);
+}
+.opal-diff-hunk td {
+  background: color-mix(in srgb, var(--info) 7%, var(--bg-muted));
+}
+
+/* Shiki dual-theme colours (same convention as markdown.css). */
+.opal-code .shiki span {
+  color: var(--shiki-light);
+}
+:root[data-theme="dark"] .opal-code .shiki span {
+  color: var(--shiki-dark);
+}
+
+/* xterm: let the token background show through and keep the viewport flush. */
+.opal-xterm .xterm,
+.opal-xterm .xterm-viewport {
+  background-color: var(--bg) !important;
+}
+.opal-xterm .xterm {
+  height: 100%;
+}
+.opal-xterm .xterm-viewport::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+}

@@ -1,0 +1,31 @@
+/* Motion primitives shared by popovers, menus and dialogs (≤150ms, restrained). */
+@keyframes opal-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-2px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes opal-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.opal-pop[data-state="open"] {
+  animation: opal-pop-in 120ms ease-out;
+}
+.opal-fade[data-state="open"],
+.opal-fade[data-state="delayed-open"],
+.opal-fade[data-state="instant-open"] {
+  animation: opal-fade-in 120ms ease-out;
+}
+/* Dialog content is translated for centering, so only fade it. */
+[role="dialog"].opal-pop[data-state="open"] {
+  animation: opal-fade-in 120ms ease-out;
+}

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Artifact</title>
+    <link rel="stylesheet" href="./runtime.css" />
+    <!--
+      React is loaded from esm.sh (pinned). Every other bare import is rewritten by react.js to
+      https://esm.sh/<pkg>@<pinned>?external=react,react-dom so all packages share this one React.
+    -->
+    <script type="importmap">
+      {
+        "imports": {
+          "react": "https://esm.sh/react@19.3.1",
+          "react/jsx-runtime": "https://esm.sh/react@19.3.1/jsx-runtime",
+          "react/jsx-dev-runtime": "https://esm.sh/react@19.3.1/jsx-dev-runtime",
+          "react-dom": "https://esm.sh/react-dom@19.3.1?external=react",
+          "react-dom/client": "https://esm.sh/react-dom@19.3.1/client?external=react"
+        }
+      }
+    </script>
+    <!-- Tailwind CSS v4 browser build: scans the DOM for utility classes at runtime. -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.3"></script>
+    <script src="./vendor/sucrase.js"></script>
+    <script src="./runtime.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="./react.js"></script>
+  </body>
+</html>

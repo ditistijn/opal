@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Diagram</title>
+    <link rel="stylesheet" href="./runtime.css" />
+    <style>
+      html, body { height: 100%; overflow: hidden; }
+      #stage { position: absolute; inset: 0; overflow: hidden; cursor: grab; touch-action: none; }
+      #stage.dragging { cursor: grabbing; }
+      #canvas { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+      #canvas svg { display: block; max-width: none !important; height: auto; }
+    </style>
+    <script src="./runtime.js"></script>
+  </head>
+  <body>
+    <div id="stage"><div id="canvas"></div></div>
+    <div class="opal-toolbar" id="toolbar" hidden>
+      <button data-act="out" title="Zoom out">−</button>
+      <button data-act="fit" title="Fit to view">Fit</button>
+      <button data-act="in" title="Zoom in">+</button>
+    </div>
+    <script>
+      ;(function () {
+        var RT = window.OpalRuntime
+        var MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@11.12.2/dist/mermaid.esm.min.mjs"
+        var stage = document.getElementById("stage")
+        var canvas = document.getElementById("canvas")
+        var view = { x: 0, y: 0, k: 1 }
+        var size = { w: 0, h: 0 }
+        function apply() {
+          canvas.style.transform = "translate(" + view.x + "px," + view.y + "px) scale(" + view.k + ")"
+        }
+        function fit() {
+          var pad = 32
+          var sw = stage.clientWidth, sh = stage.clientHeight
+          var k = Math.min((sw - pad * 2) / size.w, (sh - pad * 2) / size.h, 2)
+          if (!isFinite(k) || k <= 0) k = 1
+          view.k = k
+          view.x = (sw - size.w * k) / 2
+          view.y = (sh - size.h * k) / 2
+          apply()
+        }
+        function zoomAt(factor, cx, cy) {
+          var k = Math.min(8, Math.max(0.1, view.k * factor))
+          var f = k / view.k
+          view.x = cx - (cx - view.x) * f
+          view.y = cy - (cy - view.y) * f
+          view.k = k
+          apply()
+        }
+        stage.addEventListener("wheel", function (e) {
+          e.preventDefault()
+          if (e.ctrlKey || e.metaKey) zoomAt(Math.exp(-e.deltaY * 0.01), e.clientX, e.clientY)
+          else { view.x -= e.deltaX; view.y -= e.deltaY; apply() }
+        }, { passive: false })
+        var drag = null
+        stage.addEventListener("pointerdown", function (e) {
+          drag = { x: e.clientX - view.x, y: e.clientY - view.y }
+          stage.setPointerCapture(e.pointerId)
+          stage.classList.add("dragging")
+        })
+        stage.addEventListener("pointermove", function (e) {
+          if (!drag) return
+          view.x = e.clientX - drag.x
+          view.y = e.clientY - drag.y
+          apply()
+        })
+        stage.addEventListener("pointerup", function () { drag = null; stage.classList.remove("dragging") })
+        stage.addEventListener("dblclick", fit)
+        document.getElementById("toolbar").addEventListener("click", function (e) {
+          var act = e.target.getAttribute("data-act")
+          var cx = stage.clientWidth / 2, cy = stage.clientHeight / 2
+          if (act === "in") zoomAt(1.25, cx, cy)
+          else if (act === "out") zoomAt(0.8, cx, cy)
+          else if (act === "fit") fit()
+        })
+        window.addEventListener("resize", fit)
+
+        RT.whenFiles()
+          .then(function () { return Promise.all([RT.readFile(RT.entry), import(MERMAID_URL)]) })
+          .then(function (r) {
+            var src = r[0].replace(/^```(?:mermaid)?\s*\n([\s\S]*?)\n```\s*$/, "$1")
+            var mermaid = r[1].default
+            mermaid.initialize({ startOnLoad: false, theme: RT.theme === "dark" ? "dark" : "neutral", securityLevel: "strict" })
+            return mermaid.render("opal-diagram", src)
+          })
+          .then(function (out) {
+            canvas.innerHTML = out.svg
+            var svg = canvas.querySelector("svg")
+            var vb = svg.viewBox && svg.viewBox.baseVal
+            size.w = (vb && vb.width) || svg.getBoundingClientRect().width
+            size.h = (vb && vb.height) || svg.getBoundingClientRect().height
+            svg.setAttribute("width", size.w)
+            svg.setAttribute("height", size.h)
+            svg.style.maxWidth = "none"
+            fit()
+            document.getElementById("toolbar").hidden = false
+            RT.rendered("mermaid")
+          })
+          .catch(function (err) {
+            // mermaid leaves a stray error svg in the body
+            document.querySelectorAll("body > [id^='dopal-diagram']").forEach(function (n) { n.remove() })
+            RT.reportError(err, "transpile")
+          })
+      })()
+    </script>
+  </body>
+</html>

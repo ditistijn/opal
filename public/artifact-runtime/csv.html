@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Table</title>
+    <link rel="stylesheet" href="./runtime.css" />
+    <style>
+      html, body { height: 100%; }
+      body { display: flex; flex-direction: column; font-size: 13px; }
+      .meta { flex: none; display: flex; gap: 12px; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--rt-border); color: var(--rt-fg-muted); font-size: 12px; }
+      .meta input { margin-left: auto; height: 26px; width: 200px; border: 1px solid var(--rt-border-strong); border-radius: 6px; padding: 0 8px; font: inherit; color: var(--rt-fg); background: var(--rt-bg); }
+      .wrap { flex: 1; overflow: auto; user-select: text; }
+      table { border-collapse: separate; border-spacing: 0; min-width: 100%; }
+      th, td { padding: 6px 12px; border-bottom: 1px solid var(--rt-border); border-right: 1px solid var(--rt-border); white-space: nowrap; max-width: 420px; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+      th { position: sticky; top: 0; background: var(--rt-muted); font-weight: 600; z-index: 1; cursor: default; }
+      th:hover { background: var(--rt-inset); }
+      th .dir { color: var(--rt-fg-muted); margin-left: 4px; font-weight: 400; }
+      td.num { text-align: right; font-variant-numeric: tabular-nums; }
+      td.idx, th.idx { position: sticky; left: 0; background: var(--rt-muted); color: var(--rt-fg-muted); text-align: right; font-variant-numeric: tabular-nums; z-index: 2; }
+      th.idx { z-index: 3; }
+      tr:hover td { background: var(--rt-muted); }
+    </style>
+    <script src="./runtime.js"></script>
+  </head>
+  <body>
+    <div class="meta"><span id="count"></span><input id="filter" placeholder="Filter rows" /></div>
+    <div class="wrap"><table id="table"></table></div>
+    <script>
+      ;(function () {
+        var RT = window.OpalRuntime
+        var MAX_ROWS = 5000
+        /** RFC 4180-ish parser: quotes, escaped quotes, CRLF, custom delimiter. */
+        function parse(text, delim) {
+          var rows = [], row = [], field = "", q = false
+          for (var i = 0; i < text.length; i++) {
+            var c = text[i]
+            if (q) {
+              if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++ } else q = false }
+              else field += c
+            } else if (c === '"' && field === "") q = true
+            else if (c === delim) { row.push(field); field = "" }
+            else if (c === "\n" || c === "\r") {
+              if (c === "\r" && text[i + 1] === "\n") i++
+              row.push(field); rows.push(row); row = []; field = ""
+            } else field += c
+          }
+          if (field !== "" || row.length) { row.push(field); rows.push(row) }
+          return rows
+        }
+        function detect(text, entry) {
+          if (/\.tsv$/i.test(entry)) return "\t"
+          var line = text.split(/\r?\n/)[0] || ""
+          var counts = [",", ";", "\t", "|"].map(function (d) { return [d, line.split(d).length] })
+          counts.sort(function (a, b) { return b[1] - a[1] })
+          return counts[0][1] > 1 ? counts[0][0] : ","
+        }
+        var isNum = function (s) { return s !== "" && !isNaN(Number(s.replace(/,/g, ""))) }
+        RT.whenFiles()
+          .then(function () { return RT.readFile(RT.entry) })
+          .then(function (text) {
+            var rows = parse(text.replace(/^\uFEFF/, ""), detect(text, RT.entry)).filter(function (r) { return r.length > 1 || r[0] !== "" })
+            if (!rows.length) throw new Error("The CSV file is empty")
+            var header = rows[0], body = rows.slice(1)
+            var numeric = header.map(function (_, c) {
+              var sample = body.slice(0, 200).map(function (r) { return r[c] || "" }).filter(Boolean)
+              return sample.length > 0 && sample.every(isNum)
+            })
+            var sort = { col: -1, dir: 1 }, filter = ""
+            var table = document.getElementById("table")
+            function draw() {
+              var data = body
+              if (filter) { var f = filter.toLowerCase(); data = data.filter(function (r) { return r.join("\u0000").toLowerCase().indexOf(f) >= 0 }) }
+              if (sort.col >= 0) {
+                var c = sort.col, n = numeric[c]
+                data = data.slice().sort(function (a, b) {
+                  var x = a[c] || "", y = b[c] || ""
+                  return (n ? Number(x.replace(/,/g, "")) - Number(y.replace(/,/g, "")) : x.localeCompare(y, undefined, { numeric: true })) * sort.dir
+                })
+              }
+              var shown = data.slice(0, MAX_ROWS)
+              var h = "<thead><tr><th class='idx'></th>" + header.map(function (t, i) {
+                return "<th data-col='" + i + "'>" + RT.escapeHTML(t) + (sort.col === i ? "<span class='dir'>" + (sort.dir > 0 ? "▲" : "▼") + "</span>" : "") + "</th>"
+              }).join("") + "</tr></thead><tbody>"
+              h += shown.map(function (r, i) {
+                return "<tr><td class='idx'>" + (i + 1) + "</td>" + header.map(function (_, c) {
+                  var v = r[c] === undefined ? "" : r[c]
+                  return "<td" + (numeric[c] ? " class='num'" : "") + " title='" + RT.escapeHTML(v) + "'>" + RT.escapeHTML(v) + "</td>"
+                }).join("") + "</tr>"
+              }).join("") + "</tbody>"
+              table.innerHTML = h
+              document.getElementById("count").textContent =
+                data.length.toLocaleString() + " rows × " + header.length + " columns" + (data.length > MAX_ROWS ? " (showing first " + MAX_ROWS.toLocaleString() + ")" : "")
+            }
+            table.addEventListener("click", function (e) {
+              var th = e.target.closest("th[data-col]")
+              if (!th) return
+              var c = Number(th.getAttribute("data-col"))
+              sort = sort.col === c ? { col: c, dir: -sort.dir } : { col: c, dir: 1 }
+              draw()
+            })
+            document.getElementById("filter").addEventListener("input", function (e) { filter = e.target.value; draw() })
+            draw()
+            RT.rendered("csv")
+          })
+          .catch(function (err) { RT.reportError(err, "load") })
+      })()
+    </script>
+  </body>
+</html>

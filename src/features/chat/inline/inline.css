@@ -1,0 +1,90 @@
+/* Inline widgets inside assistant messages (docs/INLINE-WIDGETS.md). */
+
+/*
+ * Categorical chart palette, fixed order (never cycled). Validated for adjacent-pair CVD separation in
+ * both modes; dark steps are selected for the dark surface, not flipped.
+ */
+:root {
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-4: #eda100;
+  --chart-5: #e87ba4;
+  --chart-6: #008300;
+  --chart-7: #6250d6;
+  --chart-8: #e34948;
+  --chart-9: #5e5d59;
+  --chart-10: #b4b2a9;
+  --chart-11: #256abf;
+  --chart-12: #c9663f;
+}
+:root[data-theme="dark"] {
+  --chart-1: #3987e5;
+  --chart-2: #d95926;
+  --chart-3: #199e70;
+  --chart-4: #c98500;
+  --chart-5: #d55181;
+  --chart-6: #008300;
+  --chart-7: #9085e9;
+  --chart-8: #e66767;
+  --chart-9: #b8b5ac;
+  --chart-10: #5f5d57;
+  --chart-11: #6da7ec;
+  --chart-12: #e48a6c;
+}
+
+.opal-inline {
+  margin: 1.25em 0;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+/* height follows the widget document; animate so content below does not jump */
+.opal-inline-frame {
+  transition: height 160ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .opal-inline-frame {
+    transition: none;
+  }
+}
+
+.opal-inline-chart .recharts-surface:focus,
+.opal-inline-chart .recharts-wrapper:focus,
+.opal-inline-chart *:focus:not(:focus-visible) {
+  outline: none;
+}
+.opal-inline-chart .recharts-cartesian-axis-tick-value {
+  font-variant-numeric: tabular-nums;
+}
+
+/* the Source view reuses CodeBlock; tighten it inside the card */
+.opal-inline .opal-code {
+  margin: 0;
+  border-radius: 0;
+  border-width: 1px 0 0;
+}
+.opal-inline .opal-code > :last-child {
+  max-height: 360px;
+  overflow: auto;
+}
+
+/* block skeleton while a frame or the chart bundle loads */
+@keyframes opal-inline-skeleton {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+.opal-inline-skeleton {
+  background: linear-gradient(90deg, var(--bg-muted) 0%, var(--bg-inset) 50%, var(--bg-muted) 100%);
+  background-size: 200% 100%;
+  animation: opal-inline-skeleton 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .opal-inline-skeleton {
+    animation: none;
+  }
+}

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Opal favicon: the terracotta cabochon from the app icon, without the tile. -->
+  <defs>
+    <radialGradient id="s" cx="0.42" cy="0.36" r="0.8">
+      <stop offset="0" stop-color="#E9967A"/>
+      <stop offset="0.55" stop-color="#CC6A47"/>
+      <stop offset="1" stop-color="#9E4A30"/>
+    </radialGradient>
+    <radialGradient id="g" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#F7C98B" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#F7C98B" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="t" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#8FD3C3" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#8FD3C3" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="c"><rect x="6" y="6" width="52" height="52" rx="18"/></clipPath>
+  </defs>
+  <g transform="rotate(-10 32 32)">
+    <rect x="6" y="6" width="52" height="52" rx="18" fill="url(#s)"/>
+    <g clip-path="url(#c)">
+      <circle cx="42" cy="43" r="14" fill="url(#g)"/>
+      <circle cx="44" cy="18" r="11" fill="url(#t)"/>
+      <path d="M12 26 C12 17 17 12 26 12 C20 15 17 20 16.5 26 C16 29 12 29 12 26 Z" fill="#fff" fill-opacity="0.6"/>
+    </g>
+  </g>
+</svg>

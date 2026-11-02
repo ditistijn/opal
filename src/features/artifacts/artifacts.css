@@ -1,0 +1,66 @@
+/* Artifact panel: loading shimmer + Shiki dual-theme code view. Tokens only (see src/index.css). */
+@keyframes opal-artifact-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+.artifact-shimmer {
+  background: linear-gradient(90deg, var(--bg-muted) 0%, var(--bg-inset) 50%, var(--bg-muted) 100%);
+  background-size: 200% 100%;
+  animation: opal-artifact-shimmer 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .artifact-shimmer {
+    animation: none;
+  }
+}
+
+.artifact-code pre.shiki {
+  margin: 0;
+  padding: 14px 0 32px;
+  background: transparent !important;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  counter-reset: line;
+  tab-size: 2;
+}
+.artifact-code pre.shiki code {
+  display: block;
+  min-width: max-content;
+}
+.artifact-code pre.shiki .line {
+  display: inline-block;
+  width: 100%;
+  padding-right: 20px;
+}
+.artifact-code pre.shiki .line::before {
+  counter-increment: line;
+  content: counter(line);
+  display: inline-block;
+  width: 3.2em;
+  margin-right: 16px;
+  text-align: right;
+  color: var(--fg-faint);
+  user-select: none;
+}
+.artifact-code .shiki,
+.artifact-code .shiki span {
+  color: var(--shiki-light);
+}
+:root[data-theme="dark"] .artifact-code .shiki,
+:root[data-theme="dark"] .artifact-code .shiki span {
+  color: var(--shiki-dark);
+}
+.artifact-code .plain-code {
+  margin: 0;
+  padding: 14px 20px 32px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  white-space: pre;
+  tab-size: 2;
+}

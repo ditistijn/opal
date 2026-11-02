@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>JSON</title>
+    <link rel="stylesheet" href="./runtime.css" />
+    <style>
+      body { padding: 16px 18px 64px; font: 13px/1.6 var(--rt-font-mono); user-select: text; }
+      details { padding-left: 16px; }
+      details > summary { list-style: none; margin-left: -16px; cursor: default; }
+      details > summary::-webkit-details-marker { display: none; }
+      details > summary::before { content: "▸"; display: inline-block; width: 16px; color: var(--rt-fg-muted); transition: transform 0.1s; }
+      details[open] > summary::before { transform: rotate(90deg); }
+      .row { padding-left: 16px; }
+      .k { color: #a1543b; }
+      .s { color: #4f7a3a; white-space: pre-wrap; word-break: break-word; }
+      .n { color: #9a5b00; }
+      .b, .z { color: #b4472c; }
+      .hint { color: var(--rt-fg-muted); }
+      :root[data-theme="dark"] .k { color: #e3a58b; }
+      :root[data-theme="dark"] .s { color: #a5c88a; }
+      :root[data-theme="dark"] .n { color: #e0b46a; }
+      :root[data-theme="dark"] .b, :root[data-theme="dark"] .z { color: #e8916f; }
+      #raw { margin: 0; white-space: pre; }
+    </style>
+    <script src="./runtime.js"></script>
+  </head>
+  <body>
+    <div id="tree"></div>
+    <pre id="raw" hidden></pre>
+    <div class="opal-toolbar">
+      <button id="expand" title="Expand all">Expand</button>
+      <button id="collapse" title="Collapse all">Collapse</button>
+      <button id="rawbtn" aria-pressed="false" title="Raw JSON">Raw</button>
+    </div>
+    <script>
+      ;(function () {
+        var RT = window.OpalRuntime
+        var esc = RT.escapeHTML
+        function prim(v) {
+          if (v === null) return "<span class='z'>null</span>"
+          if (typeof v === "string") return "<span class='s'>" + esc(JSON.stringify(v)) + "</span>"
+          if (typeof v === "number") return "<span class='n'>" + v + "</span>"
+          return "<span class='b'>" + v + "</span>"
+        }
+        function node(key, v, depth) {
+          var label = key === null ? "" : "<span class='k'>" + esc(JSON.stringify(key)) + "</span>: "
+          if (v === null || typeof v !== "object") return "<div class='row'>" + label + prim(v) + "</div>"
+          var arr = Array.isArray(v)
+          var keys = arr ? v.map(function (_, i) { return i }) : Object.keys(v)
+          var open = depth < 2 ? " open" : ""
+          var hint = arr ? "[" + keys.length + "]" : "{" + keys.length + "}"
+          var kids = keys.map(function (k) { return node(arr ? null : k, v[k], depth + 1) }).join("")
+          return "<details" + open + "><summary>" + label + "<span class='hint'>" + hint + "</span></summary>" + kids + "</details>"
+        }
+        RT.whenFiles()
+          .then(function () { return RT.readFile(RT.entry) })
+          .then(function (text) {
+            var data
+            try { data = JSON.parse(text) } catch (e) { throw new Error(RT.entry + " is not valid JSON: " + e.message) }
+            var tree = document.getElementById("tree")
+            tree.innerHTML = node(null, data, 0)
+            document.getElementById("raw").textContent = JSON.stringify(data, null, 2)
+            document.getElementById("expand").onclick = function () { tree.querySelectorAll("details").forEach(function (d) { d.open = true }) }
+            document.getElementById("collapse").onclick = function () { tree.querySelectorAll("details").forEach(function (d, i) { d.open = i === 0 }) }
+            var rawbtn = document.getElementById("rawbtn")
+            rawbtn.onclick = function () {
+              var on = rawbtn.getAttribute("aria-pressed") !== "true"
+              rawbtn.setAttribute("aria-pressed", String(on))
+              tree.hidden = on
+              document.getElementById("raw").hidden = !on
+            }
+            RT.rendered("json")
+          })
+          .catch(function (err) { RT.reportError(err, "load") })
+      })()
+    </script>
+  </body>
+</html>

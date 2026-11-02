@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Artifact</title>
+    <script src="./runtime.js"></script>
+  </head>
+  <body>
+    <!--
+      HTML shell for bridge/embedded mode only (plain-browser dev and exported bundles). Inside the app
+      HTML artifacts load directly from artifact://localhost/<id>/<entry> and this file is not used.
+      It inlines the artifact's own relative <link>/<script>/<img> files and document.write()s the page.
+    -->
+    <script>
+      ;(function () {
+        var RT = window.OpalRuntime
+        function rewrite(html, files) {
+          var entry = RT.normalize(RT.entry)
+          var bridge = '<script src="' + new URL("./error-bridge.js", location.href).href + '"><\/script>'
+          function local(ref) {
+            if (!ref || /^([a-z][a-z0-9+.-]*:|\/\/|#)/i.test(ref)) return null
+            if (ref.indexOf("/_runtime/") === 0) return null
+            var p = RT.resolve(entry, ref.split(/[?#]/)[0])
+            return p && Object.prototype.hasOwnProperty.call(files, p) ? p : null
+          }
+          html = html.replace(/<script\b([^>]*)\bsrc=(["'])([^"']+)\2([^>]*)><\/script>/gi, function (m, a, q, src, b) {
+            if (src.indexOf("/_runtime/") === 0) return '<script' + a + 'src="' + new URL("." + src.slice(9), location.href).href + '"' + b + "><\/script>"
+            var p = local(src)
+            if (!p) return m
+            return "<script" + a + b + ">" + files[p].replace(/<\/script/gi, "<\\/script") + "<\/script>"
+          })
+          html = html.replace(/<link\b([^>]*)\bhref=(["'])([^"']+)\2([^>]*)>/gi, function (m, a, q, href, b) {
+            var p = local(href)
+            if (!p || !/stylesheet/i.test(a + b)) return m
+            return "<style>" + files[p] + "</style>"
+          })
+          html = html.replace(/\b(src|href)=(["'])([^"']+)\2/gi, function (m, attr, q, ref) {
+            var p = local(ref)
+            return p ? attr + "=" + q + RT.fileURL(p) + q : m
+          })
+          return /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, function (h) { return h + bridge }) : bridge + html
+        }
+        RT.whenFiles()
+          .then(function () { return RT.listFiles() })
+          .then(function (names) {
+            var files = {}
+            return Promise.all(
+              (names || [RT.entry]).map(function (n) {
+                return RT.readFile(n).then(function (t) { files[n] = t })
+              }),
+            ).then(function () { return files })
+          })
+          .then(function (files) {
+            var html = rewrite(files[RT.normalize(RT.entry)], files)
+            document.open()
+            document.write(html)
+            document.close()
+          })
+          .catch(function (err) { RT.reportError(err, "load") })
+      })()
+    </script>
+  </body>
+</html>

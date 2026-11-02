@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Document</title>
+    <link rel="stylesheet" href="./runtime.css" />
+    <style>
+      body { padding: 40px 28px 72px; }
+      .doc { max-width: 680px; margin: 0 auto; font-size: 16px; line-height: 1.7; color: var(--rt-fg); user-select: text; }
+      .doc > :first-child { margin-top: 0; }
+      .doc h1, .doc h2, .doc h3, .doc h4 { font-family: var(--rt-font-serif); font-weight: 600; line-height: 1.25; letter-spacing: -0.005em; margin: 1.8em 0 0.6em; }
+      .doc h1 { font-size: 30px; margin-top: 0.4em; }
+      .doc h2 { font-size: 23px; padding-bottom: 0.25em; border-bottom: 1px solid var(--rt-border); }
+      .doc h3 { font-size: 19px; }
+      .doc h4 { font-size: 16px; }
+      .doc h5, .doc h6 { font-size: 14px; font-weight: 600; margin: 1.5em 0 0.5em; color: var(--rt-fg-secondary); }
+      .doc p, .doc ul, .doc ol, .doc blockquote, .doc table, .doc pre, .doc .mermaid-block { margin: 0 0 1.1em; }
+      .doc ul, .doc ol { padding-left: 1.5em; }
+      .doc li { margin: 0.25em 0; }
+      .doc li > ul, .doc li > ol { margin: 0.25em 0; }
+      .doc li:has(> input[type="checkbox"]) { list-style: none; margin-left: -1.3em; }
+      .doc input[type="checkbox"] { margin: 0 0.45em 0 0; vertical-align: -1px; accent-color: var(--rt-accent); }
+      .doc a { color: var(--rt-accent); text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; }
+      .doc strong { font-weight: 600; }
+      .doc hr { border: 0; border-top: 1px solid var(--rt-border); margin: 2em 0; }
+      .doc blockquote { padding: 0 0 0 1em; border-left: 3px solid var(--rt-border-strong); color: var(--rt-fg-secondary); }
+      .doc code { font-family: var(--rt-font-mono); font-size: 0.86em; background: var(--rt-code-bg); border: 1px solid var(--rt-border); border-radius: 5px; padding: 0.1em 0.35em; }
+      .doc pre { background: var(--rt-code-bg); border: 1px solid var(--rt-border); border-radius: 10px; padding: 14px 16px; overflow: auto; font-size: 13px; line-height: 1.55; }
+      .doc pre code { background: none; border: 0; padding: 0; font-size: inherit; }
+      .doc table { border-collapse: collapse; width: 100%; font-size: 14px; display: block; overflow-x: auto; }
+      .doc th, .doc td { border: 1px solid var(--rt-border-strong); padding: 7px 12px; text-align: left; vertical-align: top; }
+      .doc th { background: var(--rt-muted); font-weight: 600; }
+      .doc img { max-width: 100%; border-radius: 6px; }
+      .doc .mermaid-block { display: flex; justify-content: center; overflow-x: auto; }
+      .doc .mermaid-block svg { max-width: 100%; height: auto; }
+      .doc .footnotes { font-size: 14px; color: var(--rt-fg-secondary); }
+    </style>
+    <script src="./vendor/marked.js"></script>
+    <script src="./vendor/hljs.js"></script>
+    <script src="./runtime.js"></script>
+  </head>
+  <body>
+    <article class="doc" id="doc"></article>
+    <script src="./markdown.js"></script>
+  </body>
+</html>

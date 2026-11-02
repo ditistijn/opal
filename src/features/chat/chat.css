@@ -1,0 +1,78 @@
+/* Chat-surface motion: shimmer for in-progress labels, fades, glyph pulse. */
+@keyframes opal-shimmer-move {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+.opal-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--fg-muted) 0%,
+    var(--fg-muted) 40%,
+    var(--fg) 50%,
+    var(--fg-muted) 60%,
+    var(--fg-muted) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: opal-shimmer-move 1.6s linear infinite;
+}
+@keyframes opal-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.opal-fade-in {
+  animation: opal-fade-up 120ms ease-out;
+}
+@keyframes opal-glyph {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.86) rotate(-8deg);
+    opacity: 0.75;
+  }
+}
+.opal-glyph-pulse {
+  animation: opal-glyph 1.4s ease-in-out infinite;
+  transform-origin: 50% 55%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .opal-shimmer,
+  .opal-glyph-pulse {
+    animation: none;
+  }
+  .opal-shimmer {
+    color: var(--fg-muted);
+    background: none;
+  }
+}
+
+/* Thinking content: quieter than the answer, but still structured (paragraphs, lists, code). */
+.opal-thinking :is(p, ul, ol, pre, blockquote, h1, h2, h3, h4) {
+  margin: 0.35em 0;
+}
+.opal-thinking :is(h1, h2, h3, h4) {
+  font-size: 1em;
+  font-weight: 600;
+  color: var(--fg-secondary);
+}
+.opal-thinking pre {
+  font-size: 12.5px;
+}
+.opal-thinking :is(p, li) {
+  color: var(--fg-secondary);
+}

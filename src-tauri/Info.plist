@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Merged by the Tauri bundler into Opal.app/Contents/Info.plist (keys here win over the
+  generated ones). Referenced from tauri.conf.json → bundle.macOS.infoPlist.
+-->
+<plist version="1.0">
+<dict>
+  <key>CFBundleDisplayName</key>
+  <string>Opal</string>
+  <key>NSHumanReadableCopyright</key>
+  <string>© 2026 ditistijn</string>
+  <key>LSApplicationCategoryType</key>
+  <string>public.app-category.productivity</string>
+
+  <!-- The webview talks to the private OpenCode sidecar over plain http://127.0.0.1:<port>. -->
+  <key>NSAppTransportSecurity</key>
+  <dict>
+    <key>NSAllowsLocalNetworking</key>
+    <true/>
+  </dict>
+
+  <!-- Opal supervises a child process (the sidecar); never let macOS kill it silently. -->
+  <key>NSSupportsAutomaticTermination</key>
+  <false/>
+  <key>NSSupportsSuddenTermination</key>
+  <false/>
+
+  <!-- Follow the system light/dark appearance (the webview mirrors it via data-theme). -->
+  <key>NSRequiresAquaSystemAppearance</key>
+  <false/>
+</dict>
+</plist>

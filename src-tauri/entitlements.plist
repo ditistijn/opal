@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Hardened-runtime entitlements for Opal.app AND its sidecar (Contents/MacOS/opencode).
+  The Tauri bundler re-signs every externalBin with this same file, so it must satisfy the
+  OpenCode binary (a Bun single-file executable running JavaScriptCore with JIT). The set
+  mirrors the entitlements upstream signs `opencode` v2.2.5 with (verified by dumping
+  the upstream binary's entitlements with codesign). Opal is not App-Sandboxed (it spawns a local
+  server and works in user-chosen folders), so the network.* keys are informational.
+-->
+<plist version="1.0">
+<dict>
+  <key>com.apple.security.cs.allow-jit</key>
+  <true/>
+  <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+  <true/>
+  <key>com.apple.security.cs.disable-executable-page-protection</key>
+  <true/>
+  <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+  <true/>
+  <key>com.apple.security.cs.disable-library-validation</key>
+  <true/>
+  <key>com.apple.security.network.client</key>
+  <true/>
+  <key>com.apple.security.network.server</key>
+  <true/>
+</dict>
+</plist>

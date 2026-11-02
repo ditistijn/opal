@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Widget</title>
+  </head>
+  <body>
+    <!--
+      Inline-widget shell (docs/INLINE-WIDGETS.md §2). Always bridge mode: the chat posts the widget
+      document after opal:ready ({type:"opal:files", id, entry:"index.html", files}). This shell then
+      prepends the Opal theme variables (from ?theme=light|dark), a base stylesheet, error-bridge.js and
+      the widget bridge (opal:resize, opal:prompt, opal:open-url) and document.write()s the page.
+      Runs on an opaque origin (no allow-same-origin), so it cannot reach the app or its storage.
+    -->
+    <script>
+      ;(function () {
+        "use strict"
+        var params = new URLSearchParams(location.search)
+        var dark = params.get("theme") === "dark"
+
+        // Keep in sync with :root / [data-theme="dark"] in src/index.css.
+        var LIGHT = {
+          "--bg": "#faf9f5",
+          "--bg-elevated": "#ffffff",
+          "--bg-muted": "#f3f1ea",
+          "--bg-inset": "#e8e6dc",
+          "--fg": "#141413",
+          "--fg-secondary": "#5e5d59",
+          "--fg-muted": "#87867f",
+          "--fg-faint": "#b4b2a9",
+          "--fg-on-accent": "#ffffff",
+          "--border": "rgba(20, 20, 19, 0.10)",
+          "--border-strong": "rgba(20, 20, 19, 0.18)",
+          "--accent": "#d97757",
+          "--accent-hover": "#c9663f",
+          "--accent-soft": "rgba(217, 119, 87, 0.12)",
+          "--success": "#3f8f5d",
+          "--warning": "#b8860b",
+          "--danger": "#c4452d",
+          "--info": "#4d6fb4",
+        }
+        var DARK = {
+          "--bg": "#262624",
+          "--bg-elevated": "#30302e",
+          "--bg-muted": "#2b2a28",
+          "--bg-inset": "#3a3936",
+          "--fg": "#f0eee6",
+          "--fg-secondary": "#b8b5ac",
+          "--fg-muted": "#8b8980",
+          "--fg-faint": "#5f5d57",
+          "--fg-on-accent": "#ffffff",
+          "--border": "rgba(240, 238, 230, 0.10)",
+          "--border-strong": "rgba(240, 238, 230, 0.18)",
+          "--accent": "#d97757",
+          "--accent-hover": "#e48a6c",
+          "--accent-soft": "rgba(217, 119, 87, 0.18)",
+          "--success": "#67b283",
+          "--warning": "#d9a53a",
+          "--danger": "#e5695a",
+          "--info": "#7f9fe0",
+        }
+        var tokens = dark ? DARK : LIGHT
+        var vars = Object.keys(tokens)
+          .map(function (k) {
+            return k + ":" + tokens[k] + ";"
+          })
+          .join("")
+        var FONT =
+          '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Helvetica, Arial, sans-serif'
+        var MONO = '"SF Mono", ui-monospace, "JetBrains Mono", Menlo, Monaco, Consolas, monospace'
+
+        var BASE_CSS =
+          ":root{color-scheme:" + (dark ? "dark" : "light") + ";" + vars +
+          "--font-sans:" + FONT + ";--font-mono:" + MONO + ";}" +
+          "*,*::before,*::after{box-sizing:border-box}" +
+          "html{background:transparent}" +
+          "body{margin:0;background:transparent;color:var(--fg);font-family:var(--font-sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}" +
+          "h1,h2,h3,h4{line-height:1.25;margin:0 0 .5em}" +
+          "a{color:var(--accent)}" +
+          "code,pre,kbd{font-family:var(--font-mono);font-size:.92em}" +
+          "button,input,select,textarea{font:inherit;color:inherit}" +
+          "button{cursor:pointer;border:1px solid var(--border-strong);background:var(--bg-elevated);border-radius:8px;padding:6px 12px;transition:background-color .12s,border-color .12s}" +
+          "button:hover{background:var(--bg-muted)}" +
+          "button:disabled{opacity:.45;cursor:default}" +
+          "input:not([type=range]):not([type=checkbox]):not([type=radio]),select,textarea{border:1px solid var(--border-strong);background:var(--bg-elevated);border-radius:8px;padding:6px 10px}" +
+          "input[type=range],input[type=checkbox],input[type=radio]{accent-color:var(--accent)}" +
+          "input[type=range]{width:100%}" +
+          ":focus-visible{outline:2px solid color-mix(in srgb,var(--accent) 55%,transparent);outline-offset:2px}" +
+          "table{border-collapse:collapse}th,td{border-bottom:1px solid var(--border);padding:6px 8px;text-align:left}" +
+          "hr{border:0;border-top:1px solid var(--border)}"
+
+        // Runs inside the written page (the window survives document.open, its listeners do not).
+        function widgetBridge() {
+          var last = 0
+          var queued = false
+          function post(msg) {
+            try {
+              window.parent.postMessage(msg, "*")
+            } catch (e) {}
+          }
+          function measure() {
+            queued = false
+            var de = document.documentElement
+            var body = document.body
+            var h = de.getBoundingClientRect().height
+            if (body) {
+              var cs = getComputedStyle(body)
+              h = Math.max(h, body.getBoundingClientRect().bottom + (parseFloat(cs.marginBottom) || 0))
+            }
+            h = Math.ceil(h)
+            if (Math.abs(h - last) < 1) return
+            last = h
+            post({ type: "opal:resize", height: h })
+          }
+          // Measured on a microtask, never requestAnimationFrame: Chromium pauses rendering (and rAF) for
+          // cross-origin iframes outside the viewport, and a widget that grows while scrolled away (a
+          // diagram that finishes loading) would never report its height.
+          function schedule() {
+            if (queued) return
+            queued = true
+            Promise.resolve().then(measure)
+          }
+          if (!window.__opalErrorBridge) {
+            // error-bridge.js could not load (e.g. blocked scheme): minimal equivalent so errors still surface
+            var report = function (err) {
+              post({
+                type: "opal:error",
+                message: err && err.message ? String(err.message) : String(err),
+                stack: err && err.stack ? String(err.stack) : "",
+                phase: "runtime",
+              })
+            }
+            window.addEventListener("error", function (e) {
+              if (e.message || e.error) report(e.error || new Error(e.message))
+            })
+            window.addEventListener("unhandledrejection", function (e) {
+              report(e.reason instanceof Error ? e.reason : new Error(String(e.reason)))
+            })
+            window.addEventListener("load", function () {
+              post({ type: "opal:rendered", kind: "widget" })
+            })
+          }
+          var ro = new ResizeObserver(schedule)
+          ro.observe(document.documentElement)
+          document.addEventListener("DOMContentLoaded", function () {
+            if (document.body) ro.observe(document.body)
+            schedule()
+          })
+          window.addEventListener("load", schedule)
+          if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule)
+          // Fallback for growth the observers miss (throttled frames, late web fonts, async renders).
+          setInterval(measure, 750)
+          window.opal = Object.freeze({
+            sendPrompt: function (text) {
+              if (typeof text !== "string" || !text.trim()) return
+              post({ type: "opal:prompt", text: text.slice(0, 8000) })
+            },
+            theme: document.documentElement.getAttribute("data-theme") || "light",
+          })
+          // error-bridge.js only routes cross-origin links; send every http(s)/mailto link out.
+          document.addEventListener(
+            "click",
+            function (e) {
+              var a = e.target && e.target.closest ? e.target.closest("a[href]") : null
+              if (!a || e.defaultPrevented) return
+              var href = a.getAttribute("href") || ""
+              if (href.charAt(0) === "#") return
+              e.preventDefault()
+              var url
+              try {
+                url = new URL(href, location.href)
+              } catch (err) {
+                return
+              }
+              if (url.protocol === "http:" || url.protocol === "https:" || url.protocol === "mailto:")
+                post({ type: "opal:open-url", url: url.href })
+            },
+            true,
+          )
+        }
+
+        function inject(html) {
+          var errorBridge = new URL("./error-bridge.js", location.href).href
+          var head =
+            '<script src="' + errorBridge + '"><\/script>' +
+            "<style data-opal>" + BASE_CSS + "</style>" +
+            "<script>(" + widgetBridge.toString() + ")()<\/script>"
+          var attrs = ' data-theme="' + (dark ? "dark" : "light") + '"'
+          // html attribute: theme marker, so widgets can style [data-theme=dark] too
+          if (/<html[\s>]/i.test(html)) html = html.replace(/<html/i, "<html" + attrs)
+          if (/<head(\s[^>]*)?>/i.test(html)) return html.replace(/<head(\s[^>]*)?>/i, function (h) { return h + head })
+          if (/<html(\s[^>]*)?>/i.test(html)) return html.replace(/<html(\s[^>]*)?>/i, function (h) { return h + "<head>" + head + "</head>" })
+          return "<!doctype html><html" + attrs + "><head>" + head + "</head><body>" + html + "</body></html>"
+        }
+
+        function post(msg) {
+          try {
+            window.parent.postMessage(msg, "*")
+          } catch (e) {}
+        }
+
+        window.addEventListener("message", function (event) {
+          if (event.source !== window.parent) return
+          var data = event.data
+          if (!data || data.type !== "opal:files" || !data.files) return
+          var entry = data.entry || "index.html"
+          var html = data.files[entry]
+          if (typeof html !== "string") {
+            post({ type: "opal:error", message: "Widget document missing", phase: "load" })
+            return
+          }
+          document.open()
+          document.write(inject(html))
+          document.close()
+        })
+        post({ type: "opal:ready" })
+      })()
+    </script>
+  </body>
+</html>

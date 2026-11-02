@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Image</title>
+    <link rel="stylesheet" href="./runtime.css" />
+    <style>
+      html, body { height: 100%; }
+      body { display: grid; place-items: center; padding: 24px; overflow: auto; }
+      body.checker {
+        background-color: var(--rt-bg);
+        background-image: linear-gradient(45deg, var(--rt-inset) 25%, transparent 25%), linear-gradient(-45deg, var(--rt-inset) 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, var(--rt-inset) 75%), linear-gradient(-45deg, transparent 75%, var(--rt-inset) 75%);
+        background-size: 16px 16px;
+        background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+      }
+      img { display: block; max-width: 100%; max-height: calc(100vh - 48px); object-fit: contain; }
+      img.actual { max-width: none; max-height: none; }
+    </style>
+    <script src="./runtime.js"></script>
+  </head>
+  <body>
+    <img id="img" alt="" />
+    <div class="opal-toolbar">
+      <button id="checker" aria-pressed="false" title="Transparency grid">Grid</button>
+      <button id="actual" aria-pressed="false" title="Actual size">1:1</button>
+    </div>
+    <script>
+      ;(function () {
+        var RT = window.OpalRuntime
+        var img = document.getElementById("img")
+        function toggle(btn, fn) {
+          btn.addEventListener("click", function () {
+            var on = btn.getAttribute("aria-pressed") !== "true"
+            btn.setAttribute("aria-pressed", String(on))
+            fn(on)
+          })
+        }
+        toggle(document.getElementById("checker"), function (on) { document.body.classList.toggle("checker", on) })
+        toggle(document.getElementById("actual"), function (on) { img.classList.toggle("actual", on) })
+        RT.whenFiles()
+          .then(function () { return RT.readFile(RT.entry) })
+          .then(function (text) {
+            if (!/<svg[\s>]/i.test(text)) throw new Error(RT.entry + " does not contain an <svg> element")
+            // <img> renders SVG without running any script inside it.
+            img.onload = function () { RT.rendered("svg") }
+            img.onerror = function () { RT.reportError(new Error("The SVG could not be rendered (is it well-formed XML with xmlns=\"http://www.w3.org/2000/svg\"?)"), "load") }
+            img.src = URL.createObjectURL(new Blob([text], { type: "image/svg+xml" }))
+          })
+          .catch(function (err) { RT.reportError(err, "load") })
+      })()
+    </script>
+  </body>
+</html>

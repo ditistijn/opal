@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!--
+    Opal app icon (original artwork, © 2026 ditistijn).
+    macOS icon grid: 824×824 body at (100,100) with a continuous-corner radius,
+    warm ivory tile, terracotta opal cabochon with a soft iridescent play-of-colour.
+    Rendered to icons/opal.png by scripts/render-icon.mjs, then `pnpm tauri icon`.
+  -->
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FCFAF5"/>
+      <stop offset="1" stop-color="#ECE6D9"/>
+    </linearGradient>
+    <linearGradient id="tileEdge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#D9D1C1" stop-opacity="0.9"/>
+    </linearGradient>
+    <filter id="tileShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#3D2A1E" flood-opacity="0.28"/>
+    </filter>
+
+    <!-- Opal body: terracotta base -->
+    <radialGradient id="stone" cx="0.42" cy="0.36" r="0.75">
+      <stop offset="0" stop-color="#E58E6C"/>
+      <stop offset="0.55" stop-color="#CC6A47"/>
+      <stop offset="1" stop-color="#9E4A30"/>
+    </radialGradient>
+    <!-- Play-of-colour patches -->
+    <radialGradient id="fireGold" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#F7C98B" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#F7C98B" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="fireLilac" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#C4AEEA" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#C9B6E4" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="fireSea" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#8FD3C3" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#9FD4C8" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="fireRose" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#F4A99A" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#F4A99A" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="gloss" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="rim" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0.78" stop-color="#5E2A18" stop-opacity="0"/>
+      <stop offset="1" stop-color="#5E2A18" stop-opacity="0.35"/>
+    </radialGradient>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="26"/>
+    </filter>
+    <filter id="stoneShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#6B3A22" flood-opacity="0.32"/>
+    </filter>
+
+    <!-- The stone: a soft rounded-square cabochon -->
+    <rect id="gem" x="262" y="262" width="500" height="500" rx="168" ry="168"/>
+    <clipPath id="gemClip"><use href="#gem"/></clipPath>
+    <linearGradient id="bevel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.55"/>
+      <stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.3"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Tile -->
+  <g filter="url(#tileShadow)">
+    <rect x="100" y="100" width="824" height="824" rx="186" ry="186" fill="url(#tile)"/>
+  </g>
+  <rect x="101.5" y="101.5" width="821" height="821" rx="184.5" ry="184.5" fill="none"
+        stroke="url(#tileEdge)" stroke-width="3"/>
+
+  <!-- Stone -->
+  <g transform="rotate(-10 512 512)">
+    <use href="#gem" fill="url(#stone)" filter="url(#stoneShadow)"/>
+    <g clip-path="url(#gemClip)">
+      <g filter="url(#soft)">
+        <ellipse cx="600" cy="610" rx="150" ry="115" fill="url(#fireGold)"/>
+        <ellipse cx="380" cy="630" rx="140" ry="110" fill="url(#fireLilac)"/>
+        <ellipse cx="640" cy="380" rx="130" ry="105" fill="url(#fireSea)"/>
+        <ellipse cx="470" cy="470" rx="170" ry="140" fill="url(#fireRose)"/>
+      </g>
+      <use href="#gem" fill="url(#rim)"/>
+      <!-- Bevel (table edge of the cabochon) -->
+      <rect x="300" y="300" width="424" height="424" rx="134" ry="134" fill="none"
+            stroke="url(#bevel)" stroke-width="5"/>
+      <!-- Specular highlight -->
+      <path d="M318 430 C 318 352 352 318 430 312 C 384 344 356 380 350 438 C 346 474 318 474 318 430 Z"
+            fill="url(#gloss)"/>
+      <circle cx="652" cy="338" r="14" fill="#FFFFFF" fill-opacity="0.6"/>
+    </g>
+  </g>
+</svg>

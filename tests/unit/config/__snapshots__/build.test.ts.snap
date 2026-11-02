@@ -1,0 +1,394 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`buildOpenCodeConfig > matches the snapshot for the GLM fixture 1`] = `
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agents": {
+    "artifact": {
+      "color": "#D97757",
+      "description": "Builds apps, visualizations, diagrams and documents as live artifacts and iterates on them.",
+      "mode": "primary",
+      "permissions": [
+        {
+          "action": "execute",
+          "effect": "deny",
+          "resource": "*",
+        },
+        {
+          "action": "external_directory",
+          "effect": "ask",
+          "resource": "*",
+        },
+      ],
+      "system": "ARTIFACT PROMPT",
+    },
+    "code": {
+      "color": "#4D6FB4",
+      "description": "Repository-aware software engineering: plans, edits, runs tests and keeps git tidy.",
+      "mode": "primary",
+      "permissions": [
+        {
+          "action": "execute",
+          "effect": "deny",
+          "resource": "*",
+        },
+        {
+          "action": "edit",
+          "effect": "ask",
+          "resource": "*",
+        },
+        {
+          "action": "shell",
+          "effect": "ask",
+          "resource": "*",
+        },
+        {
+          "action": "shell",
+          "effect": "allow",
+          "resource": "ls *",
+        },
+        {
+          "action": "shell",
+          "effect": "allow",
+          "resource": "pwd",
+        },
+        {
+          "action": "shell",
+          "effect": "allow",
+          "resource": "git status *",
+        },
+        {
+          "action": "shell",
+          "effect": "allow",
+          "resource": "git diff *",
+        },
+        {
+          "action": "shell",
+          "effect": "allow",
+          "resource": "git log *",
+        },
+        {
+          "action": "shell",
+          "effect": "allow",
+          "resource": "git show *",
+        },
+        {
+          "action": "shell",
+          "effect": "allow",
+          "resource": "rg *",
+        },
+        {
+          "action": "shell",
+          "effect": "allow",
+          "resource": "which *",
+        },
+        {
+          "action": "external_directory",
+          "effect": "ask",
+          "resource": "*",
+        },
+      ],
+      "system": "CODE PROMPT",
+    },
+    "general": {
+      "color": "#87867F",
+      "description": "A concise, helpful assistant for questions, writing and analysis.",
+      "mode": "all",
+      "permissions": [
+        {
+          "action": "execute",
+          "effect": "deny",
+          "resource": "*",
+        },
+        {
+          "action": "external_directory",
+          "effect": "ask",
+          "resource": "*",
+        },
+      ],
+      "system": "GENERAL PROMPT",
+    },
+    "research": {
+      "color": "#3F8F5D",
+      "description": "Searches the web, reads sources and writes cited, well-reasoned syntheses.",
+      "mode": "primary",
+      "permissions": [
+        {
+          "action": "execute",
+          "effect": "deny",
+          "resource": "*",
+        },
+        {
+          "action": "external_directory",
+          "effect": "ask",
+          "resource": "*",
+        },
+      ],
+      "system": "RESEARCH PROMPT",
+    },
+  },
+  "default_agent": "artifact",
+  "experimental": {
+    "artifacts": true,
+    "subagent_depth": 1,
+  },
+  "model": "zai/glm-5.3",
+  "policies": [
+    {
+      "action": "provider.use",
+      "effect": "deny",
+      "resource": "openrouter",
+    },
+  ],
+  "providers": {
+    "ollama": {
+      "compatibility": {
+        "requireFinishReason": false,
+      },
+      "models": {
+        "qwen3:8b": {
+          "capabilities": {
+            "tools": true,
+          },
+          "name": "qwen3:8b (8.2B)",
+        },
+      },
+      "name": "Ollama",
+      "package": "@ai-sdk/openai-compatible",
+      "settings": {
+        "baseURL": "http://127.0.0.1:11434/v1",
+      },
+    },
+    "zai": {
+      "compatibility": {
+        "requireFinishReason": false,
+      },
+      "models": {
+        "glm-5.3": {
+          "capabilities": {
+            "input": [
+              "text",
+            ],
+            "output": [
+              "text",
+            ],
+            "reasoning": {
+              "supported": true,
+            },
+            "tools": true,
+          },
+          "limit": {
+            "context": 1000000,
+            "output": 32768,
+          },
+          "name": "GLM-5.3",
+        },
+      },
+      "name": "Z.AI",
+      "package": "@ai-sdk/openai-compatible",
+      "settings": {
+        "baseURL": "https://api.z.ai/api/paas/v4",
+      },
+    },
+  },
+  "share": "disabled",
+  "update": "disable",
+}
+`;
+
+exports[`buildOpenCodeConfig > matches the snapshot with the sandbox shell 1`] = `
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agents": {
+    "artifact": {
+      "color": "#D97757",
+      "description": "Builds apps, visualizations, diagrams and documents as live artifacts and iterates on them.",
+      "mode": "primary",
+      "permissions": [
+        {
+          "action": "execute",
+          "effect": "deny",
+          "resource": "*",
+        },
+        {
+          "action": "external_directory",
+          "effect": "ask",
+          "resource": "*",
+        },
+      ],
+      "system": "ARTIFACT PROMPT",
+    },
+    "code": {
+      "color": "#4D6FB4",
+      "description": "Repository-aware software engineering: plans, edits, runs tests and keeps git tidy.",
+      "mode": "primary",
+      "permissions": [
+        {
+          "action": "execute",
+          "effect": "deny",
+          "resource": "*",
+        },
+        {
+          "action": "edit",
+          "effect": "ask",
+          "resource": "*",
+        },
+        {
+          "action": "shell",
+          "effect": "ask",
+          "resource": "*",
+        },
+        {
+          "action": "shell",
+          "effect": "allow",
+          "resource": "ls *",
+        },
+        {
+          "action": "shell",
+          "effect": "allow",
+          "resource": "pwd",
+        },
+        {
+          "action": "shell",
+          "effect": "allow",
+          "resource": "git status *",
+        },
+        {
+          "action": "shell",
+          "effect": "allow",
+          "resource": "git diff *",
+        },
+        {
+          "action": "shell",
+          "effect": "allow",
+          "resource": "git log *",
+        },
+        {
+          "action": "shell",
+          "effect": "allow",
+          "resource": "git show *",
+        },
+        {
+          "action": "shell",
+          "effect": "allow",
+          "resource": "rg *",
+        },
+        {
+          "action": "shell",
+          "effect": "allow",
+          "resource": "which *",
+        },
+        {
+          "action": "external_directory",
+          "effect": "ask",
+          "resource": "*",
+        },
+      ],
+      "system": "CODE PROMPT",
+    },
+    "general": {
+      "color": "#87867F",
+      "description": "A concise, helpful assistant for questions, writing and analysis.",
+      "mode": "all",
+      "permissions": [
+        {
+          "action": "execute",
+          "effect": "deny",
+          "resource": "*",
+        },
+        {
+          "action": "external_directory",
+          "effect": "ask",
+          "resource": "*",
+        },
+      ],
+      "system": "GENERAL PROMPT",
+    },
+    "research": {
+      "color": "#3F8F5D",
+      "description": "Searches the web, reads sources and writes cited, well-reasoned syntheses.",
+      "mode": "primary",
+      "permissions": [
+        {
+          "action": "execute",
+          "effect": "deny",
+          "resource": "*",
+        },
+        {
+          "action": "external_directory",
+          "effect": "ask",
+          "resource": "*",
+        },
+      ],
+      "system": "RESEARCH PROMPT",
+    },
+  },
+  "default_agent": "artifact",
+  "experimental": {
+    "artifacts": true,
+    "subagent_depth": 1,
+  },
+  "model": "zai/glm-5.3",
+  "policies": [
+    {
+      "action": "provider.use",
+      "effect": "deny",
+      "resource": "openrouter",
+    },
+  ],
+  "providers": {
+    "ollama": {
+      "compatibility": {
+        "requireFinishReason": false,
+      },
+      "models": {
+        "qwen3:8b": {
+          "capabilities": {
+            "tools": true,
+          },
+          "name": "qwen3:8b (8.2B)",
+        },
+      },
+      "name": "Ollama",
+      "package": "@ai-sdk/openai-compatible",
+      "settings": {
+        "baseURL": "http://127.0.0.1:11434/v1",
+      },
+    },
+    "zai": {
+      "compatibility": {
+        "requireFinishReason": false,
+      },
+      "models": {
+        "glm-5.3": {
+          "capabilities": {
+            "input": [
+              "text",
+            ],
+            "output": [
+              "text",
+            ],
+            "reasoning": {
+              "supported": true,
+            },
+            "tools": true,
+          },
+          "limit": {
+            "context": 1000000,
+            "output": 32768,
+          },
+          "name": "GLM-5.3",
+        },
+      },
+      "name": "Z.AI",
+      "package": "@ai-sdk/openai-compatible",
+      "settings": {
+        "baseURL": "https://api.z.ai/api/paas/v4",
+      },
+    },
+  },
+  "share": "disabled",
+  "shell": "/Users/me/Library/Application Support/Opal/bin/sandbox/zsh",
+  "update": "disable",
+}
+`;

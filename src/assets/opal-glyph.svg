@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Opal glyph (monochrome, inherits currentColor). Rounded-square cabochon with bevel + highlight. -->
+  <g transform="rotate(-10 12 12)">
+    <rect x="3.5" y="3.5" width="17" height="17" rx="6"/>
+    <rect x="6.5" y="6.5" width="11" height="11" rx="3.6" stroke-opacity="0.45" stroke-width="1.1"/>
+    <path d="M7.6 10.2c0-1.5.9-2.5 2.5-2.6"/>
+  </g>
+</svg>

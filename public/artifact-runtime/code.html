@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Code</title>
+    <link rel="stylesheet" href="./runtime.css" />
+    <style>
+      body { padding: 0; }
+      table { border-collapse: collapse; font: 12.5px/1.6 var(--rt-font-mono); width: 100%; }
+      td.ln { width: 1%; padding: 0 12px 0 16px; text-align: right; color: var(--rt-fg-muted); user-select: none; vertical-align: top; opacity: 0.7; }
+      td.src { padding: 0 16px 0 0; white-space: pre; user-select: text; }
+      tbody tr:first-child td { padding-top: 14px; }
+      tbody tr:last-child td { padding-bottom: 24px; }
+    </style>
+    <script src="./vendor/hljs.js"></script>
+    <script src="./runtime.js"></script>
+  </head>
+  <body>
+    <table><tbody id="code"></tbody></table>
+    <script>
+      ;(function () {
+        var RT = window.OpalRuntime
+        var EXT = { py: "python", rs: "rust", go: "go", rb: "ruby", sh: "bash", zsh: "bash", yml: "yaml", kt: "kotlin", cs: "csharp", hpp: "cpp", h: "c", m: "objectivec", txt: "plaintext" }
+        RT.whenFiles()
+          .then(function () { return RT.readFile(RT.entry) })
+          .then(function (text) {
+            var ext = (RT.entry.split(".").pop() || "").toLowerCase()
+            var lang = EXT[ext] || ext
+            var html = window.hljs.getLanguage(lang) ? window.hljs.highlight(text, { language: lang, ignoreIllegals: true }).value : RT.escapeHTML(text)
+            // re-open spans per line so each line is self-contained
+            var lines = [], open = []
+            html.split("\n").forEach(function (line) {
+              var prefix = open.join("")
+              var re = /<span[^>]*>|<\/span>/g, m
+              while ((m = re.exec(line))) { if (m[0] === "</span>") open.pop(); else open.push(m[0]) }
+              lines.push(prefix + line + "</span>".repeat(open.length))
+            })
+            document.getElementById("code").innerHTML = lines.map(function (l, i) {
+              return "<tr><td class='ln'>" + (i + 1) + "</td><td class='src hljs'>" + (l || " ") + "</td></tr>"
+            }).join("")
+            RT.rendered("code")
+          })
+          .catch(function (err) { RT.reportError(err, "load") })
+      })()
+    </script>
+  </body>
+</html>

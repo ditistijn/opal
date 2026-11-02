@@ -1,0 +1,217 @@
+@import "tailwindcss";
+
+/*
+  Opal design tokens — a warm, quiet, neutral visual language:
+  warm neutral surfaces, subtle borders, restrained accent, refined type.
+  Tokens are the single source of truth; components never hardcode colors.
+*/
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  color-scheme: light;
+
+  /* surfaces */
+  --bg: #faf9f5; /* main conversation background (warm ivory) */
+  --bg-sidebar: #f0eee6; /* sidebar / secondary */
+  --bg-elevated: #ffffff; /* composer, popovers */
+  --bg-muted: #f3f1ea; /* hover rows, code blocks */
+  --bg-inset: #e8e6dc; /* pressed, chips */
+  --bg-artifact: #ffffff;
+
+  /* ink */
+  --fg: #141413;
+  --fg-secondary: #5e5d59;
+  --fg-muted: #87867f;
+  --fg-faint: #b4b2a9;
+  --fg-on-accent: #ffffff;
+
+  /* lines */
+  --border: rgba(20, 20, 19, 0.1);
+  --border-strong: rgba(20, 20, 19, 0.18);
+
+  /* accent (terracotta) */
+  --accent: #d97757;
+  --accent-hover: #c9663f;
+  --accent-soft: rgba(217, 119, 87, 0.12);
+
+  /* semantic */
+  --danger: #c4452d;
+  --danger-soft: rgba(196, 69, 45, 0.1);
+  --success: #3f8f5d;
+  --warning: #b8860b;
+  --info: #4d6fb4;
+
+  /* user bubble */
+  --bubble-user: #eeece2;
+
+  --ring: rgba(217, 119, 87, 0.45);
+
+  /* type */
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, "Times New Roman", serif;
+  --font-mono: "SF Mono", ui-monospace, "JetBrains Mono", Menlo, Monaco, Consolas, monospace;
+
+  /* radii */
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-composer: 18px;
+
+  /* layout */
+  --sidebar-width: 280px;
+  --sidebar-collapsed-width: 52px;
+  --titlebar-height: 38px;
+  --content-max-width: 760px;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #262624;
+  --bg-sidebar: #1f1e1d;
+  --bg-elevated: #30302e;
+  --bg-muted: #2b2a28;
+  --bg-inset: #3a3936;
+  --bg-artifact: #1f1e1d;
+
+  --fg: #f0eee6;
+  --fg-secondary: #b8b5ac;
+  --fg-muted: #8b8980;
+  --fg-faint: #5f5d57;
+  --fg-on-accent: #ffffff;
+
+  --border: rgba(240, 238, 230, 0.1);
+  --border-strong: rgba(240, 238, 230, 0.18);
+
+  --accent: #d97757;
+  --accent-hover: #e48a6c;
+  --accent-soft: rgba(217, 119, 87, 0.18);
+
+  --danger: #e5695a;
+  --danger-soft: rgba(229, 105, 90, 0.14);
+  --success: #67b283;
+  --warning: #d9a53a;
+  --info: #7f9fe0;
+
+  --bubble-user: #3a3936;
+  --ring: rgba(217, 119, 87, 0.5);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-sidebar: var(--bg-sidebar);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-bg-muted: var(--bg-muted);
+  --color-bg-inset: var(--bg-inset);
+  --color-bg-artifact: var(--bg-artifact);
+  --color-fg: var(--fg);
+  --color-fg-secondary: var(--fg-secondary);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-faint: var(--fg-faint);
+  --color-fg-on-accent: var(--fg-on-accent);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-bubble-user: var(--bubble-user);
+  --color-ring: var(--ring);
+
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+  --font-mono: var(--font-mono);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-composer: var(--radius-composer);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-bg text-fg font-sans antialiased;
+    font-size: 15px;
+    line-height: 1.5;
+    margin: 0;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    user-select: none;
+    cursor: default;
+  }
+  /* Native-app feel: no focus rings from mouse, only keyboard. */
+  :focus {
+    outline: none;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+  ::selection {
+    background: var(--accent-soft);
+  }
+  .selectable,
+  .selectable * {
+    user-select: text;
+    cursor: auto;
+  }
+  /* Scrollbars that look like macOS overlay scrollbars. */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  /* Window drag region (titlebar overlay). */
+  [data-tauri-drag-region] {
+    -webkit-app-region: drag;
+  }
+  [data-tauri-drag-region] button,
+  [data-tauri-drag-region] input,
+  [data-tauri-drag-region] a {
+    -webkit-app-region: no-drag;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .shadow-elevated {
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.04),
+      0 8px 24px rgba(0, 0, 0, 0.08);
+  }
+  .shadow-composer {
+    box-shadow:
+      0 0 0 1px var(--border),
+      0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+  .transition-fast {
+    transition: all 120ms ease;
+  }
+}
