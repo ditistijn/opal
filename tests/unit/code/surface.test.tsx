@@ -37,6 +37,49 @@ describe("CodeSurface keyboard", () => {
     expect(interrupt).not.toHaveBeenCalled()
   })
 
+  it("Esc interrupts even when the session looks idle locally (stale activity)", async () => {
+    const interrupt = vi.spyOn(mock, "interrupt").mockResolvedValue()
+    useCodeNav.setState({ sessionID: "ses_code_auth" })
+    render(
+      <TooltipProvider>
+        <CodeSurface />
+      </TooltipProvider>,
+    )
+    await screen.findByTestId("code-session")
+    fireEvent.keyDown(window, { key: "Escape" })
+    await waitFor(() => expect(interrupt).toHaveBeenCalledWith("ses_code_auth"))
+  })
+
+  it("an inline or closed role=dialog element does not swallow Esc", async () => {
+    const interrupt = vi.spyOn(mock, "interrupt").mockResolvedValue()
+    useCodeNav.setState({ sessionID: "ses_code_auth" })
+    render(
+      <TooltipProvider>
+        <CodeSurface />
+        <div role="dialog" aria-label="Question" />
+        <div role="menu" data-state="closed" />
+      </TooltipProvider>,
+    )
+    await screen.findByTestId("code-session")
+    fireEvent.keyDown(window, { key: "Escape" })
+    await waitFor(() => expect(interrupt).toHaveBeenCalledWith("ses_code_auth"))
+  })
+
+  it("an open overlay still takes Esc instead of interrupting", async () => {
+    const interrupt = vi.spyOn(mock, "interrupt").mockResolvedValue()
+    useCodeNav.setState({ sessionID: "ses_code_auth" })
+    render(
+      <TooltipProvider>
+        <CodeSurface />
+        <div role="dialog" data-state="open" aria-label="Settings" />
+      </TooltipProvider>,
+    )
+    await screen.findByTestId("code-session")
+    fireEvent.keyDown(window, { key: "Escape" })
+    await new Promise((r) => setTimeout(r, 20))
+    expect(interrupt).not.toHaveBeenCalled()
+  })
+
   it("⌘⇧D toggles the diff pane", async () => {
     useCodeNav.setState({ sessionID: "ses_code_auth" })
     render(

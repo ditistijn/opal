@@ -39,7 +39,10 @@ export async function fetchAllMessages(sessionID: string): Promise<SessionMessag
   const out: SessionMessage[] = []
   let cursor: string | undefined
   for (let page = 0; page < MAX_PAGES; page++) {
-    const res = await client.message.list({ sessionID, order: "asc", limit: PAGE, cursor })
+    // The server rejects `order` together with `cursor` (400): the cursor already encodes the order.
+    const res = await client.message.list(
+      cursor ? { sessionID, limit: PAGE, cursor } : { sessionID, order: "asc", limit: PAGE },
+    )
     out.push(...res.data)
     const next = res.cursor.next ?? undefined
     if (res.data.length < PAGE || !next || next === cursor) break

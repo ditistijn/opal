@@ -13,7 +13,11 @@ import { WorktreesSheet } from "./WorktreesSheet"
 import "./code.css"
 
 function overlayOpen() {
-  return !!document.querySelector('[role="dialog"], [role="menu"], [role="listbox"][data-state="open"]')
+  // Only overlays that are actually open: closed/animating Radix content and inline cards (questions,
+  // subagent transcripts) also carry role="dialog" and must not swallow Esc-to-interrupt.
+  return !!document.querySelector(
+    ':is([role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"])[data-state="open"]',
+  )
 }
 
 /**
@@ -23,7 +27,6 @@ function overlayOpen() {
 export default function CodeSurface() {
   const sessionID = useCodeNav((s) => s.sessionID)
   const session = runtime.useSession(sessionID)
-  const activity = runtime.useSessionActivity(sessionID)
   const permissions = runtime.usePermissions(sessionID)
   const sessions = runtime.useSessions({ surface: "code" })
   const groups = useRepoGroups()
@@ -41,7 +44,8 @@ export default function CodeSurface() {
       combo: "escape",
       allowInInput: true,
       // With a pending permission, Esc belongs to the permission card (Deny).
-      enabled: !!session && activity !== "idle" && permissions.length === 0,
+      // Not gated on local activity: it can be stale, and interrupt() asks the server when unsure.
+      enabled: !!session && permissions.length === 0,
       handler: () => {
         if (!overlayOpen() && sessionID) void runtime.interrupt(sessionID)
       },

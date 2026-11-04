@@ -27,7 +27,11 @@ import "./chat.css"
 export const NARROW_WIDTH = 1000
 
 function overlayOpen() {
-  return !!document.querySelector('[role="dialog"], [role="menu"], [role="listbox"][data-state="open"]')
+  // Only overlays that are actually open: closed/animating Radix content and inline cards (questions,
+  // subagent transcripts) also carry role="dialog" and must not swallow Esc-to-interrupt.
+  return !!document.querySelector(
+    ':is([role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"])[data-state="open"]',
+  )
 }
 
 /** Chat surface: sidebar + home / conversation (+ artifact split) / projects. */
@@ -36,7 +40,6 @@ export default function ChatSurface() {
   const go = useNav((s) => s.go)
   const settingsState = useNav((s) => s.settings)
   const sessionID = view.kind === "session" ? view.sessionID : undefined
-  const activity = runtime.useSessionActivity(sessionID)
   const artifacts = runtime.useArtifacts(sessionID)
   const { artifactID, setActive } = runtime.useActiveArtifact(sessionID)
 
@@ -63,7 +66,8 @@ export default function ChatSurface() {
     {
       combo: "escape",
       allowInInput: true,
-      enabled: !!sessionID && activity !== "idle",
+      // Not gated on local activity: it can be stale, and interrupt() asks the server when unsure.
+      enabled: !!sessionID,
       handler: () => {
         if (!overlayOpen() && sessionID) void runtime.interrupt(sessionID)
       },

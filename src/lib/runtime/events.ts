@@ -7,7 +7,7 @@
  */
 import { serverStore, whenReady } from "@/lib/opencode/client"
 import type { OpenCodeEvent } from "@/lib/opencode/types"
-import { handleActivityEvent, resyncActivity } from "./stores/activity"
+import { handleActivityEvent, resyncActivity, startActivityPoll } from "./stores/activity"
 import { handleArtifactEvent, resyncArtifacts } from "./stores/artifacts"
 import { handleCatalogEvent, refreshCatalog } from "./stores/catalog"
 import { handleFilesEvent, resyncFiles } from "./stores/files"
@@ -71,6 +71,7 @@ let running = false
 export function startEventLoop() {
   if (running) return
   running = true
+  startActivityPoll()
   void (async () => {
     for (let attempt = 0; ;) {
       const client = await whenReady()

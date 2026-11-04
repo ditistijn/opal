@@ -310,8 +310,13 @@ export async function interrupt(sessionID: string) {
     for (const id of queuedLocal.get(sessionID) ?? []) removeLocalMessage(sessionID, id)
     queuedLocal.delete(sessionID)
   }
-  if (getActivity(sessionID) === "idle" && !limiter.isActive(sessionID)) return
-  await (await client()).session.interrupt({ sessionID })
+  const c = await client()
+  if (getActivity(sessionID) === "idle" && !limiter.isActive(sessionID)) {
+    // The event stream can miss a run starting (it has no heartbeat), so ask the server before giving up.
+    const active = await c.session.active()
+    if (!active[sessionID]) return
+  }
+  await c.session.interrupt({ sessionID })
 }
 
 // ---------- code surface ----------

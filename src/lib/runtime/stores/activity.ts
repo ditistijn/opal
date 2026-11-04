@@ -65,6 +65,8 @@ export function armWatchdog(sessionID: string) {
       try {
         const active = await (await whenReady()).session.active()
         if (!active[sessionID]) settleIdle(sessionID)
+        // Running but `execution.started` never arrived: show it as busy so Stop / Esc work.
+        else setServerActivity(sessionID, "busy")
       } catch {
         settleIdle(sessionID)
       }
@@ -108,6 +110,21 @@ export async function resyncActivity() {
   const known = activityStore.getState().server
   for (const id of Object.keys(known)) if (!active[id] && known[id] !== "idle") settleIdle(id)
   for (const id of Object.keys(active)) setServerActivity(id, "busy")
+}
+
+const POLL_MS = 15_000
+let polling: ReturnType<typeof setInterval> | undefined
+
+/**
+ * Backstop for a stalled event stream: the SSE stream has no heartbeat, so if it silently stops
+ * delivering, every session would look idle (no Stop button, Esc ignored) while still running.
+ */
+export function startActivityPoll() {
+  if (polling) return
+  polling = setInterval(() => {
+    if (typeof document !== "undefined" && document.visibilityState !== "visible") return
+    void resyncActivity().catch(() => undefined)
+  }, POLL_MS)
 }
 
 export function useSessionActivity(sessionID: string | undefined): SessionActivity {
