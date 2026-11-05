@@ -147,3 +147,33 @@ describe("maskKey", () => {
     expect(maskKey(undefined)).toBe("")
   })
 })
+
+describe("API choice", () => {
+  const relay = (): ProviderDraft => ({
+    ...draft(),
+    id: "relay",
+    type: "openai-compatible",
+    baseURL: "https://relay.example/v1",
+  })
+
+  it("defaults to chat and saves responses only when chosen", () => {
+    expect(relay().api).toBe("chat")
+    expect(draftToProvider(relay()).api).toBeUndefined()
+    expect(draftToProvider({ ...relay(), api: "responses" }).api).toBe("responses")
+  })
+
+  it("drops the choice for provider types with their own protocol", () => {
+    expect(draftToProvider({ ...relay(), type: "anthropic", api: "responses" }).api).toBeUndefined()
+  })
+
+  it("round-trips the provider setting and per-model overrides", () => {
+    const saved = draftToProvider({
+      ...relay(),
+      api: "responses",
+      models: [{ id: "gpt-6.1-sol", name: "GPT", api: "chat" }],
+    })
+    const reopened = draftFromProvider(saved)
+    expect(reopened.api).toBe("responses")
+    expect(reopened.models[0].api).toBe("chat")
+  })
+})

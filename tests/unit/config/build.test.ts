@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import type { ProviderConfig } from "@/lib/runtime/contracts"
 import { agentPermissions, buildOpenCodeConfig, packageForProvider } from "@/lib/config/build"
 import { normalizeSettings } from "@/lib/runtime/stores/settings"
 import { renderAllPrompts } from "@/lib/config/prompts"
@@ -210,5 +211,58 @@ describe("providerCompatibility", () => {
     expect(providerCompatibility({ type: "openai-compatible", strictStreaming: true })).toBeUndefined()
     expect(providerCompatibility({ type: "anthropic" })).toBeUndefined()
     expect(providerCompatibility({ type: "openai" })).toBeUndefined()
+  })
+})
+
+describe("OpenAI-compatible API choice (chat vs responses)", () => {
+  const RESPONSES = "@opencode/ai/providers/openai-compatible/responses"
+  const relay = (overrides: Partial<ProviderConfig> = {}): ProviderConfig => ({
+    id: "relay",
+    name: "Relay",
+    type: "openai-compatible",
+    baseURL: "https://relay.example/v1",
+    enabled: true,
+    models: [
+      { id: "glm-5.3", name: "GLM" },
+      { id: "gpt-6.1-sol", name: "GPT", api: "responses" },
+      { id: "gpt-6-luna", name: "Luna", api: "chat" },
+    ],
+    ...overrides,
+  })
+  const build = (provider: ProviderConfig) =>
+    buildOpenCodeConfig({ settings: fixtureSettings({ providers: [provider] }), prompts: PROMPTS }).providers
+      .relay
+
+  it("keeps chat completions by default and switches single models to the Responses package", () => {
+    const entry = build(relay())
+    expect(entry.package).toBe("@ai-sdk/openai-compatible")
+    expect(entry.models?.["glm-5.3"].package).toBeUndefined()
+    expect(entry.models?.["gpt-6.1-sol"].package).toBe(RESPONSES)
+    expect(entry.models?.["gpt-6-luna"].package).toBeUndefined()
+  })
+
+  it("uses the Responses package for the whole provider, with chat overrides per model", () => {
+    const entry = build(relay({ api: "responses" }))
+    expect(entry.package).toBe(RESPONSES)
+    expect(entry.models?.["glm-5.3"].package).toBeUndefined()
+    expect(entry.models?.["gpt-6.1-sol"].package).toBeUndefined()
+    expect(entry.models?.["gpt-6-luna"].package).toBe("@ai-sdk/openai-compatible")
+  })
+
+  it("ignores the choice for providers with their own protocol", () => {
+    const entry = build(relay({ type: "anthropic", api: "responses" }))
+    expect(entry.package).toBe("@ai-sdk/anthropic")
+    expect(entry.models?.["gpt-6.1-sol"].package).toBeUndefined()
+  })
+
+  it("offers the choice only where the OpenAI-compatible protocol is used", async () => {
+    const { supportsApiChoice } = await import("@/lib/config/build")
+    expect(supportsApiChoice({ type: "openai-compatible" })).toBe(true)
+    expect(supportsApiChoice({ type: "ollama" })).toBe(false)
+    expect(supportsApiChoice({ type: "lmstudio" })).toBe(false)
+    expect(supportsApiChoice({ type: "custom" })).toBe(true)
+    expect(supportsApiChoice({ type: "custom", package: "@ai-sdk/mistral" })).toBe(false)
+    expect(supportsApiChoice({ type: "openai" })).toBe(false)
+    expect(supportsApiChoice({ type: "openrouter" })).toBe(false)
   })
 })

@@ -1,6 +1,6 @@
 import { Brain, Eye, Plus, Trash2, Wrench } from "lucide-react"
 import { useEffect, useState, type ComponentType } from "react"
-import type { ModelConfig } from "@/lib/runtime/contracts"
+import type { ModelConfig, OpenAIApi } from "@/lib/runtime/contracts"
 import { emptyModel } from "@/lib/config/provider-form"
 import { cn } from "@/lib/utils"
 import { formatTokenInput, parseTokenInput } from "@/features/models/format"
@@ -14,12 +14,21 @@ const CAPABILITIES: { key: CapabilityKey; label: string; icon: ComponentType<{ c
 ]
 
 const GRID = "grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_68px_68px_78px_30px_26px] items-center gap-1.5"
+/** Same grid plus a per-model API column, for OpenAI-compatible providers. */
+const GRID_API =
+  "grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_68px_68px_78px_48px_30px_26px] items-center gap-1.5"
+
+const API_SHORT: Record<OpenAIApi, string> = { chat: "Chat", responses: "Resp" }
+const API_LONG: Record<OpenAIApi, string> = { chat: "Chat Completions", responses: "Responses" }
 
 export function ModelsTable({
   models,
   onChange,
   rowErrors,
+  api,
 }: {
+  /** The provider's API when it offers the chat/responses choice; enables the per-model API column. */
+  api?: OpenAIApi
   models: ModelConfig[]
   onChange(models: ModelConfig[]): void
   rowErrors?: Record<number, string>
@@ -27,17 +36,19 @@ export function ModelsTable({
   const update = (index: number, patch: Partial<ModelConfig>) =>
     onChange(models.map((model, i) => (i === index ? { ...model, ...patch } : model)))
   const remove = (index: number) => onChange(models.filter((_, i) => i !== index))
+  const grid = api ? GRID_API : GRID
 
   return (
     <div className="rounded-lg border border-border">
       <div
-        className={cn(GRID, "border-b border-border px-2.5 py-1.5 text-[11.5px] font-medium text-fg-muted")}
+        className={cn(grid, "border-b border-border px-2.5 py-1.5 text-[11.5px] font-medium text-fg-muted")}
       >
         <span>Model ID</span>
         <span>Display name</span>
         <span title="Context window (tokens). Accepts 128K, 1M…">Context</span>
         <span title="Maximum output tokens">Max out</span>
         <span>Capabilities</span>
+        {api && <span title="API this model is called with. Click a model's value to switch it.">API</span>}
         <span title="Show in the model picker">On</span>
         <span />
       </div>
@@ -51,7 +62,7 @@ export function ModelsTable({
             const error = rowErrors?.[index]
             return (
               <li key={index} className="border-b border-border px-2.5 py-1.5 last:border-b-0">
-                <div className={GRID}>
+                <div className={grid}>
                   <TextInput
                     mono
                     aria-label={`Model ${index + 1} ID`}
@@ -104,6 +115,14 @@ export function ModelsTable({
                       )
                     })}
                   </div>
+                  {api && (
+                    <ApiToggle
+                      index={index}
+                      providerApi={api}
+                      value={model.api}
+                      onChange={(next) => update(index, { api: next })}
+                    />
+                  )}
                   <Switch
                     aria-label={`Show model ${index + 1} in the picker`}
                     checked={model.enabled !== false}
@@ -135,6 +154,44 @@ export function ModelsTable({
         </Button>
       </div>
     </div>
+  )
+}
+
+/**
+ * Per-model API: shows the protocol the model is called with. Clicking switches it to the other one (an
+ * override, highlighted) or back to following the provider.
+ */
+function ApiToggle({
+  index,
+  providerApi,
+  value,
+  onChange,
+}: {
+  index: number
+  providerApi: OpenAIApi
+  value: OpenAIApi | undefined
+  onChange(value: OpenAIApi | undefined): void
+}) {
+  const effective = value ?? providerApi
+  const overridden = effective !== providerApi
+  const other: OpenAIApi = effective === "chat" ? "responses" : "chat"
+  return (
+    <button
+      type="button"
+      aria-label={`API for model ${index + 1}: ${API_LONG[effective]}`}
+      title={
+        overridden
+          ? `${API_LONG[effective]} (overrides the provider). Click to follow the provider again.`
+          : `${API_LONG[effective]} (from the provider). Click to use ${API_LONG[other]} for this model.`
+      }
+      onClick={() => onChange(overridden ? undefined : other)}
+      className={cn(
+        "h-6 rounded-md text-[11.5px] font-medium transition-fast",
+        overridden ? "bg-accent-soft text-accent" : "text-fg-muted hover:bg-bg-muted hover:text-fg",
+      )}
+    >
+      {API_SHORT[effective]}
+    </button>
   )
 }
 

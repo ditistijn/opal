@@ -152,7 +152,16 @@ export interface ProviderConfig {
    * proxies drop that final chunk (OpenCode then retried the whole step). Maps to compatibility.requireFinishReason.
    */
   strictStreaming?: boolean
+  /**
+   * Wire protocol for OpenAI-compatible endpoints: "chat" = /chat/completions (default), "responses" =
+   * /responses. Some upstreams (OpenAI reasoning models behind relays) reject tools + reasoning_effort on
+   * /chat/completions and only accept them on /responses. Individual models can override this.
+   */
+  api?: OpenAIApi
 }
+
+/** OpenAI-compatible wire protocol: /chat/completions or /responses. */
+export type OpenAIApi = "chat" | "responses"
 
 export interface ModelConfig {
   id: string
@@ -161,6 +170,8 @@ export interface ModelConfig {
   maxOutputTokens?: number
   capabilities?: { tools?: boolean; vision?: boolean; reasoning?: boolean }
   enabled?: boolean
+  /** Overrides the provider's `api` for this model (OpenAI-compatible endpoints only). */
+  api?: OpenAIApi
 }
 
 export interface Project {

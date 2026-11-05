@@ -16,12 +16,15 @@
  *    `@opencode/ai/providers/*` packages (aisdk-native.ts). Some provider IDs get a dedicated native package
  *    (zai, zhipuai, deepseek, moonshotai, alibaba …), and IDs that exist in the models.dev catalog inherit the
  *    catalog's model metadata.
+ *  - A provider or model `package` may also name a native package directly. `@opencode/ai/providers/
+ *    openai-compatible/responses` speaks the Responses API (/responses) to any OpenAI-compatible base URL; Opal
+ *    uses it for providers/models whose `api` is "responses" (config.ts `Config.Model.package`).
  *  - `agents.<id>.system` replaces the base system prompt entirely; new agents start from Agent.Info.default
  *    permissions (`* allow`, `.env` reads ask) and configured rules are appended — the last matching rule wins.
  *
  * API keys are never written unless `apiKeyStorage: "file"` is requested AND the provider carries `apiKey`.
  */
-import type { AppSettings, ModeID, ModelConfig, ProviderConfig } from "@/lib/runtime/contracts"
+import type { AppSettings, ModeID, ModelConfig, OpenAIApi, ProviderConfig } from "@/lib/runtime/contracts"
 import { MODE_IDS, MODES } from "./prompts"
 import { formatModelRef, isValidModelID, sanitizeProviderID } from "./ids"
 import { VISION_AGENT_DESCRIPTION, VISION_AGENT_ID, VISION_SYSTEM_PROMPT, visionAgentModel } from "./vision"
@@ -54,6 +57,7 @@ export type PermissionRule = { action: string; resource: string; effect: Permiss
 
 export type OpenCodeModelEntry = {
   name?: string
+  package?: string
   limit?: { context?: number; output?: number }
   capabilities?: {
     tools?: boolean
@@ -114,6 +118,19 @@ export const PACKAGE_FOR_TYPE: Record<Exclude<ProviderConfig["type"], "custom">,
 export const DEFAULT_BASE_URL: Partial<Record<ProviderConfig["type"], string>> = {
   ollama: "http://127.0.0.1:11434/v1",
   lmstudio: "http://127.0.0.1:1234/v1",
+}
+
+/** OpenCode's native Responses-API protocol for OpenAI-compatible endpoints (POST <baseURL>/responses). */
+export const OPENAI_COMPATIBLE_RESPONSES_PACKAGE = "@opencode/ai/providers/openai-compatible/responses"
+
+/**
+ * True when `api` (chat / responses) applies: remote OpenAI-compatible endpoints. Ollama and LM Studio are left
+ * out because the Responses package refuses to run without an API key ("Missing auth credential: apiKey"),
+ * while those local servers are normally keyless.
+ */
+export function supportsApiChoice(provider: Pick<ProviderConfig, "type" | "package">): boolean {
+  if (provider.type !== "openai-compatible" && provider.type !== "custom") return false
+  return packageForProvider(provider) === PACKAGE_FOR_TYPE["openai-compatible"]
 }
 
 export function packageForProvider(provider: Pick<ProviderConfig, "type" | "package">): string {
@@ -181,16 +198,18 @@ function providerEntry(provider: ProviderConfig, storage: "credential" | "file")
   if (baseURL) settings.baseURL = baseURL.replace(/\/+$/, "")
   if (storage === "file" && provider.apiKey?.trim()) settings.apiKey = provider.apiKey.trim()
 
+  const apiChoice = supportsApiChoice(provider)
+  const providerApi = apiChoice ? (provider.api ?? "chat") : undefined
   const entry: OpenCodeProviderEntry = {
     name: provider.name.trim() || provider.id,
-    package: packageForProvider(provider),
+    package: providerApi === "responses" ? OPENAI_COMPATIBLE_RESPONSES_PACKAGE : packageForProvider(provider),
   }
   const compatibility = providerCompatibility(provider)
   if (compatibility) entry.compatibility = compatibility
   if (Object.keys(settings).length > 0) entry.settings = settings
   const headers = cleanHeaders(provider.headers)
   if (headers) entry.headers = headers
-  const models = modelEntries(provider.models)
+  const models = modelEntries(provider.models, providerApi)
   if (models) entry.models = models
   return entry
 }
@@ -225,12 +244,22 @@ function cleanHeaders(headers: Record<string, string> | undefined) {
   return entries.length > 0 ? Object.fromEntries(entries) : undefined
 }
 
-function modelEntries(models: ModelConfig[]) {
+/** @param providerApi the provider's protocol when it supports the chat/responses choice, else undefined */
+function modelEntries(models: ModelConfig[], providerApi?: OpenAIApi) {
   const result: Record<string, OpenCodeModelEntry> = {}
   for (const model of models) {
     const id = model.id.trim()
     if (!isValidModelID(id) || result[id]) continue
     result[id] = modelEntry(model)
+    // A model whose protocol differs from its provider's gets its own package.
+    if (providerApi && model.api && model.api !== providerApi)
+      result[id] = {
+        package:
+          model.api === "responses"
+            ? OPENAI_COMPATIBLE_RESPONSES_PACKAGE
+            : PACKAGE_FOR_TYPE["openai-compatible"],
+        ...result[id],
+      }
   }
   return Object.keys(result).length > 0 ? result : undefined
 }

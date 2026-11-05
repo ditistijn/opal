@@ -13,7 +13,7 @@ import {
 } from "lucide-react"
 import { useMemo, useState } from "react"
 import { runtime } from "@/lib/runtime"
-import type { ProviderConfig } from "@/lib/runtime/contracts"
+import type { OpenAIApi, ProviderConfig } from "@/lib/runtime/contracts"
 import { sanitizeProviderID } from "@/lib/config/ids"
 import {
   discoverModels,
@@ -30,13 +30,18 @@ import {
   type DraftErrors,
   type ProviderDraft,
 } from "@/lib/config/provider-form"
-import { DEFAULT_BASE_URL } from "@/lib/config/build"
+import { DEFAULT_BASE_URL, supportsApiChoice } from "@/lib/config/build"
 import { cn } from "@/lib/utils"
 import { Button, Field, Select, Switch, TextInput } from "../controls"
 
 /** Provider types that speak OpenAI Chat through third-party endpoints, where finish_reason is often missing. */
 const STREAMING_TOGGLE_TYPES = new Set(["openai-compatible", "custom", "ollama", "lmstudio", "openrouter"])
 import { ModelsTable } from "./ModelsTable"
+
+const API_OPTIONS: { value: OpenAIApi; label: string }[] = [
+  { value: "chat", label: "Chat Completions" },
+  { value: "responses", label: "Responses" },
+]
 import { errorMessage, openExternal, TYPE_LABELS } from "./shared"
 
 type Notice = { tone: "success" | "error" | "info"; text: string } | undefined
@@ -64,6 +69,7 @@ export function ProviderEditor({
 
   const effectivePreset = preset ?? presetForProvider(draft)
   const requiresKey = effectivePreset?.requiresKey ?? false
+  const apiChoice = supportsApiChoice({ type: draft.type, package: draft.package })
   const set = (patch: Partial<ProviderDraft>) => {
     setDraft((current) => {
       const next = { ...current, ...patch }
@@ -185,21 +191,45 @@ export function ProviderEditor({
         </label>
       </div>
 
-      {STREAMING_TOGGLE_TYPES.has(draft.type) && (
-        <label className="flex items-start justify-between gap-4 rounded-md border border-border px-3.5 py-2.5 text-[13px]">
-          <span>
-            <span className="block text-fg">Tolerate streams that end without finish_reason</span>
-            <span className="block text-[12px] text-fg-muted">
-              Many proxies and local servers drop the final chunk; with this on, OpenCode accepts the reply
-              instead of retrying the step. Turn it off for strict streaming.
-            </span>
-          </span>
-          <Switch
-            aria-label="Tolerate streams without finish_reason"
-            checked={!draft.strictStreaming}
-            onCheckedChange={(tolerant) => set({ strictStreaming: !tolerant })}
-          />
-        </label>
+      {(STREAMING_TOGGLE_TYPES.has(draft.type) || apiChoice) && (
+        <div className="mb-5 flex flex-col gap-2">
+          {STREAMING_TOGGLE_TYPES.has(draft.type) && (
+            <label className="flex items-start justify-between gap-4 rounded-md border border-border px-3.5 py-2.5 text-[13px]">
+              <span>
+                <span className="block text-fg">Tolerate streams that end without finish_reason</span>
+                <span className="block text-[12px] text-fg-muted">
+                  Many proxies and local servers drop the final chunk; with this on, OpenCode accepts the
+                  reply instead of retrying the step. Turn it off for strict streaming.
+                </span>
+              </span>
+              <Switch
+                aria-label="Tolerate streams without finish_reason"
+                checked={!draft.strictStreaming}
+                onCheckedChange={(tolerant) => set({ strictStreaming: !tolerant })}
+              />
+            </label>
+          )}
+
+          {apiChoice && (
+            <div className="flex items-start justify-between gap-4 rounded-md border border-border px-3.5 py-2.5 text-[13px]">
+              <span>
+                <span className="block text-fg">API</span>
+                <span className="block text-[12px] text-fg-muted">
+                  Chat Completions (/chat/completions) works almost everywhere. Use Responses (/responses)
+                  when the endpoint rejects tools together with reasoning effort; it needs an API key. Single
+                  models can be switched in the table below.
+                </span>
+              </span>
+              <Select<OpenAIApi>
+                ariaLabel="API"
+                value={draft.api}
+                onValueChange={(api) => set({ api })}
+                options={API_OPTIONS}
+                className="min-w-[170px]"
+              />
+            </div>
+          )}
+        </div>
       )}
 
       <div className="grid grid-cols-2 gap-x-4 gap-y-4">
@@ -344,6 +374,7 @@ export function ProviderEditor({
         </Button>
       </div>
       <ModelsTable
+        api={apiChoice ? draft.api : undefined}
         models={draft.models}
         onChange={(models) => set({ models })}
         rowErrors={errors.modelRows}

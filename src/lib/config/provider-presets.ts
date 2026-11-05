@@ -437,6 +437,17 @@ function servesChat(item: Json) {
   return types.some((t) => typeof t === "string" && CHAT_ENDPOINTS.has(t.toLowerCase()))
 }
 
+/**
+ * "responses" when a relay says the model is served only through the Responses endpoint (`openai-response`
+ * without `openai`), so Opal talks /responses to it instead of /chat/completions.
+ */
+function endpointApi(item: Json): "responses" | undefined {
+  const types = item.supported_endpoint_types
+  if (!Array.isArray(types)) return undefined
+  const lower = types.filter((t): t is string => typeof t === "string").map((t) => t.toLowerCase())
+  return lower.includes("openai-response") && !lower.includes("openai") ? "responses" : undefined
+}
+
 /** True when a model ID looks like something that can answer a chat request. */
 export function looksChatCapable(id: string) {
   return !NON_CHAT.test(id) && !MEDIA_HINT.test(id)
@@ -467,6 +478,7 @@ export function parseOpenAIModels(body: unknown, filterNonChat = false): ModelCo
       ? architecture.output_modalities
       : undefined
     if (outputModalities && !outputModalities.includes("text")) continue
+    const api = endpointApi(item)
     models.push({
       id,
       name: str(item.name) ?? str(item.display_name) ?? id,
@@ -485,6 +497,7 @@ export function parseOpenAIModels(body: unknown, filterNonChat = false): ModelCo
         reasoning: params ? params.includes("reasoning") : false,
       },
       enabled: true,
+      ...(api ? { api } : {}),
     })
   }
   return sortModels(models)
@@ -594,6 +607,7 @@ export function mergeDiscoveredModels(existing: ModelConfig[], discovered: Model
       ...model,
       contextWindow: model.contextWindow ?? found.contextWindow,
       maxOutputTokens: model.maxOutputTokens ?? found.maxOutputTokens,
+      ...((model.api ?? found.api) ? { api: model.api ?? found.api } : {}),
     }
   })
   const known = new Set(existing.map((model) => model.id))

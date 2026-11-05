@@ -196,6 +196,18 @@ describe("parsers", () => {
     expect(models.map((m) => m.id).sort()).toEqual(["glm-5.3", "gpt-6.1-sol", "untagged-model"])
   })
 
+  it("route relay models that only serve the Responses endpoint through /responses", () => {
+    const models = parseOpenAIModels({
+      data: [
+        { id: "gpt-6.1-sol", supported_endpoint_types: ["openai-response"] },
+        { id: "gpt-6-luna", supported_endpoint_types: ["openai", "openai-response"] },
+        { id: "glm-5.3", supported_endpoint_types: ["openai"] },
+      ],
+    })
+    const api = Object.fromEntries(models.map((m) => [m.id, m.api]))
+    expect(api).toEqual({ "gpt-6.1-sol": "responses", "gpt-6-luna": undefined, "glm-5.3": undefined })
+  })
+
   it("pick a chat-capable model for the connection test", () => {
     expect(
       pickTestModel([
@@ -235,6 +247,20 @@ describe("parsers", () => {
 })
 
 describe("mergeDiscoveredModels", () => {
+  it("adopts a discovered API without overriding the user's choice", () => {
+    const { models } = mergeDiscoveredModels(
+      [
+        { id: "a", name: "a" },
+        { id: "b", name: "b", api: "chat" },
+      ],
+      [
+        { id: "a", name: "a", api: "responses" },
+        { id: "b", name: "b", api: "responses" },
+      ],
+    )
+    expect(models.map((m) => m.api)).toEqual(["responses", "chat"])
+  })
+
   it("keeps user edits and appends new models", () => {
     const merged = mergeDiscoveredModels(
       [

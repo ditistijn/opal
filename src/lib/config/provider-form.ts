@@ -2,7 +2,8 @@
  * Provider form model: creating a draft from a preset, validating it, and normalizing it for saving.
  * Pure — shared by the Settings UI and tests.
  */
-import type { ModelConfig, ProviderConfig } from "@/lib/runtime/contracts"
+import type { ModelConfig, OpenAIApi, ProviderConfig } from "@/lib/runtime/contracts"
+import { supportsApiChoice } from "./build"
 import { isValidModelID, isValidProviderID, uniqueProviderID } from "./ids"
 import type { ProviderPreset } from "./provider-presets"
 
@@ -26,6 +27,8 @@ export interface ProviderDraft {
   enabled: boolean
   /** Fail streams that end without finish_reason (off = tolerate proxies that drop the final chunk). */
   strictStreaming: boolean
+  /** Wire protocol for OpenAI-compatible endpoints (ignored for other types). */
+  api: OpenAIApi
 }
 
 export type DraftErrors = Partial<
@@ -49,6 +52,7 @@ export function draftFromPreset(preset: ProviderPreset, takenIDs: Iterable<strin
     models: preset.models.map((model) => ({ ...model, capabilities: { ...model.capabilities } })),
     enabled: true,
     strictStreaming: false,
+    api: "chat",
   }
 }
 
@@ -65,6 +69,7 @@ export function draftFromProvider(provider: ProviderConfig): ProviderDraft {
     models: provider.models.map((model) => ({ ...model, capabilities: { ...model.capabilities } })),
     enabled: provider.enabled,
     strictStreaming: provider.strictStreaming ?? false,
+    api: provider.api ?? "chat",
   }
 }
 
@@ -162,6 +167,8 @@ export function draftToProvider(draft: ProviderDraft): ProviderConfig {
     enabled: draft.enabled,
   }
   if (draft.strictStreaming) provider.strictStreaming = true
+  if (draft.api === "responses" && supportsApiChoice({ type: draft.type, package: draft.package }))
+    provider.api = "responses"
   if (draft.type === "custom" && draft.package.trim()) provider.package = draft.package.trim()
   if (draft.baseURL.trim()) provider.baseURL = draft.baseURL.trim().replace(/\/+$/, "")
   if (Object.keys(headers).length > 0) provider.headers = headers

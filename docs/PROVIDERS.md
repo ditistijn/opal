@@ -130,6 +130,27 @@ Choose **Custom** for any OpenAI-compatible endpoint, such as vLLM, llama.cpp se
 LiteLLM, or a company gateway. Enter the base URL that ends before `/chat/completions`
 (usually `…/v1`). Add any extra headers, then fetch or type models.
 
+## Chat Completions or Responses API
+
+OpenAI-compatible and Custom providers have an **API** setting: **Chat Completions**
+(`/chat/completions`, the default) or **Responses** (`/responses`). The **API** column in the
+models table switches a single model; a highlighted value overrides the provider.
+
+Use Responses when a model fails with an error like _"Function tools with reasoning_effort are
+not supported … in /v1/chat/completions. To use function tools, use /v1/responses"_. OpenAI
+reasoning models behind relays do this: with a thinking effort selected they accept tool calls
+only on `/responses`, and Opal always sends tools.
+
+- When fetching models, Opal sets Responses for models that a relay (new-api, one-api) lists
+  under the `openai-response` endpoint only. Models that list both endpoints keep the
+  provider's setting.
+- Responses needs an API key; OpenCode refuses to call it without one. Ollama and LM Studio don't
+  offer the setting because they are usually keyless.
+- Code (`build.ts`): Responses maps to OpenCode's native package
+  `@opencode/ai/providers/openai-compatible/responses`, set on the provider or on a single model
+  (`Config.Model.package`). `tests/integration/responses-api.test.ts` checks against the real
+  binary that such a model is called on `/responses` with its tools.
+
 ## Image fallback
 
 Some chat models (GLM-5.3, most local models) cannot take image input. When you drop an image
