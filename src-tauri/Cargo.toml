@@ -1,6 +1,6 @@
 [package]
 name = "opal"
-version = "0.1.2"
+version = "0.1.3"
 description = "Opal — a native macOS AI desktop client with chat, Projects and Artifacts, powered by OpenCode."
 authors = ["ditistijn"]
 edition = "2024"

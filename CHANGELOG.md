@@ -6,6 +6,16 @@ All notable changes to Opal are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.3] — 2026-11-05
+
+### Added
+
+- **Responses API for OpenAI-compatible providers**: choose Chat Completions or Responses per
+  provider, and switch single models in the models table. This fixes models that fail with
+  "Function tools with reasoning_effort are not supported … in /v1/chat/completions" (OpenAI
+  reasoning models behind relays). When fetching models from a relay, models it serves only
+  through its Responses endpoint are set to Responses automatically. Responses needs an API key.
+
 ## [0.1.2] — 2026-11-05
 
 ### Added
