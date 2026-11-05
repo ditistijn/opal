@@ -6,6 +6,7 @@ import {
   parseLMStudioModels,
   parseOllamaTags,
   parseOpenAIModels,
+  pickTestModel,
   presetForProvider,
   PROVIDER_PRESETS,
 } from "@/lib/config/provider-presets"
@@ -179,6 +180,34 @@ describe("parsers", () => {
       true,
     )
     expect(models.map((m) => m.id)).toEqual(["gpt-5"])
+  })
+
+  it("drop relay models that only serve task endpoints (image/video/rerank)", () => {
+    const models = parseOpenAIModels({
+      data: [
+        { id: "aigc-image-kling", supported_endpoint_types: ["aigc-image"] },
+        { id: "doubao-seedance-2-0", supported_endpoint_types: ["Doubao video"] },
+        { id: "BAAI/bge-reranker-v2-m3", supported_endpoint_types: ["rerank"] },
+        { id: "gpt-6.1-sol", supported_endpoint_types: ["openai", "openai-response"] },
+        { id: "glm-5.3", supported_endpoint_types: ["anthropic", "openai"] },
+        { id: "untagged-model" },
+      ],
+    })
+    expect(models.map((m) => m.id).sort()).toEqual(["glm-5.3", "gpt-6.1-sol", "untagged-model"])
+  })
+
+  it("pick a chat-capable model for the connection test", () => {
+    expect(
+      pickTestModel([
+        { id: "aigc-image-kling" },
+        { id: "aigc-video-hailuo" },
+        { id: "BAAI/bge-reranker-v2-m3" },
+        { id: "claude-opus-5", enabled: false },
+        { id: "gpt-6.1-sol" },
+      ]),
+    ).toBe("gpt-6.1-sol")
+    expect(pickTestModel([{ id: "kling-video" }])).toBe("kling-video")
+    expect(pickTestModel([])).toBeUndefined()
   })
 
   it("parse LM Studio rich model list", () => {

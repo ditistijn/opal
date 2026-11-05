@@ -106,6 +106,14 @@
   border-bottom: 1px solid var(--border);
   padding: 0.45em 0.9em 0.45em 0;
   text-align: left;
+  vertical-align: top;
+  /* `.opal-md` uses overflow-wrap:anywhere, which drops a cell's min-content
+     width to one character — auto table layout then crushes short columns
+     into a letter per line. break-word wraps the same way but keeps whole
+     words as the minimum, so columns size to their content and the
+     .opal-table wrapper scrolls horizontally if the table can't fit. */
+  overflow-wrap: break-word;
+  min-width: 4em;
 }
 .opal-md th {
   font-weight: 600;

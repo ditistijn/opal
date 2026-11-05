@@ -18,6 +18,7 @@ import { sanitizeProviderID } from "@/lib/config/ids"
 import {
   discoverModels,
   mergeDiscoveredModels,
+  pickTestModel,
   presetForProvider,
   type ProviderPreset,
 } from "@/lib/config/provider-presets"
@@ -103,7 +104,7 @@ export function ProviderEditor({
     setTestResult(undefined)
     try {
       const provider = draftToProvider(draft)
-      const modelID = provider.models.find((model) => model.enabled !== false)?.id
+      const modelID = pickTestModel(provider.models)
       setTestResult(await runtime.testProvider(provider, modelID))
     } catch (error) {
       setTestResult({ ok: false, message: errorMessage(error) })

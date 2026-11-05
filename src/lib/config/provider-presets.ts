@@ -421,6 +421,33 @@ const str = (value: unknown) => (typeof value === "string" && value.trim() ? val
 const NON_CHAT =
   /(embed|whisper|tts|dall-e|moderation|davinci|babbage|transcribe|audio|realtime|image|rerank|speech|sora)/i
 
+/** Media / task models that relays (new-api, one-api) list next to chat models. Used to pick a test model. */
+const MEDIA_HINT =
+  /(video|seedance|seedream|flux|^mj_|suno|veo|kling|vidu|pixverse|hailuo|happyhorse|i2v|t2v|r2v|lipsync|lip-sync)/i
+
+/**
+ * Relays such as new-api tag each model with the endpoints it serves (`supported_endpoint_types`).
+ * When the tag is present, only models reachable through a chat endpoint are useful in a chat client;
+ * the rest (image/video/music generation, TTS, rerank…) are task-based and reject chat requests.
+ */
+const CHAT_ENDPOINTS = new Set(["openai", "openai-response", "anthropic"])
+function servesChat(item: Json) {
+  const types = item.supported_endpoint_types
+  if (!Array.isArray(types) || types.length === 0) return true
+  return types.some((t) => typeof t === "string" && CHAT_ENDPOINTS.has(t.toLowerCase()))
+}
+
+/** True when a model ID looks like something that can answer a chat request. */
+export function looksChatCapable(id: string) {
+  return !NON_CHAT.test(id) && !MEDIA_HINT.test(id)
+}
+
+/** The model "Test connection" should call: the first enabled one that looks chat-capable. */
+export function pickTestModel(models: Pick<ModelConfig, "id" | "enabled">[]) {
+  const enabled = models.filter((model) => model.enabled !== false)
+  return (enabled.find((model) => looksChatCapable(model.id)) ?? enabled[0])?.id
+}
+
 export function parseOpenAIModels(body: unknown, filterNonChat = false): ModelConfig[] {
   const list = isObject(body) && Array.isArray(body.data) ? body.data : Array.isArray(body) ? body : []
   const models: ModelConfig[] = []
@@ -429,6 +456,7 @@ export function parseOpenAIModels(body: unknown, filterNonChat = false): ModelCo
     const id = str(item.id)
     if (!id || id.includes("#")) continue
     if (filterNonChat && NON_CHAT.test(id)) continue
+    if (!servesChat(item)) continue
     const architecture = isObject(item.architecture) ? item.architecture : undefined
     const topProvider = isObject(item.top_provider) ? item.top_provider : undefined
     const modalities = Array.isArray(architecture?.input_modalities)
