@@ -6,6 +6,21 @@ All notable changes to Opal are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.1] — 2026-11-05
+
+### Fixed
+
+- Long conversations (more than 200 messages) no longer open empty after restarting Opal.
+- Esc reliably stops a running reply, even when the live event stream has stalled, and inline
+  cards no longer swallow the key.
+- Tables in replies size their columns to the content instead of squeezing short columns down to
+  one letter per line; wide tables scroll sideways.
+
+### Changed
+
+- Model discovery for relay providers (new-api, one-api) hides image, video and other task models
+  that can't answer chat requests, and "Test connection" now tests a chat-capable model.
+
 ## [0.1.0] — 2026-11-02
 
 First public release.
