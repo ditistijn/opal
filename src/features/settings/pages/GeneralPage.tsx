@@ -2,7 +2,12 @@ import { runtime } from "@/lib/runtime"
 import type { AppSettings, ModeID } from "@/lib/runtime/contracts"
 import { MODE_IDS, MODES } from "@/lib/config/prompts"
 import { ModelSelector } from "@/features/models/ModelSelector"
+import { visionModels } from "@/lib/config/vision"
+import type { ModelInfo } from "@/lib/opencode/types"
 import { PageHeader, SectionTitle, Select, SettingRow, Stepper, Switch } from "../controls"
+
+/** Stable reference for ModelSelector's memo: image-capable models that can call tools (the helper uses read). */
+const isVisionModel = (model: ModelInfo) => visionModels([model]).length > 0
 
 export const MIN_CONNECTIONS = 1
 export const MAX_CONNECTIONS = 16
@@ -43,6 +48,38 @@ export function GeneralPage() {
             align="end"
           />
         </SettingRow>
+        <SettingRow
+          label="Image fallback"
+          description="When a chat's model can't see images, let it hand dropped images to an image-capable model that describes them."
+          htmlFor="settings-image-fallback"
+        >
+          <Switch
+            id="settings-image-fallback"
+            checked={settings.imageFallback.enabled}
+            onCheckedChange={(enabled) => update({ imageFallback: { ...settings.imageFallback, enabled } })}
+          />
+        </SettingRow>
+        {settings.imageFallback.enabled ? (
+          <SettingRow
+            label="Image fallback model"
+            description="Must accept image input. Picked automatically when you add a vision model."
+          >
+            <ModelSelector
+              value={settings.imageFallback.model}
+              onChange={(model) =>
+                update({
+                  imageFallback: {
+                    ...settings.imageFallback,
+                    model: { providerID: model.providerID, id: model.id },
+                  },
+                })
+              }
+              filter={isVisionModel}
+              placeholder="No vision model"
+              align="end"
+            />
+          </SettingRow>
+        ) : null}
         <SettingRow
           label="Max concurrent API connections"
           description={

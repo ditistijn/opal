@@ -160,12 +160,14 @@ export function makeRuntime(): Runtime {
       const sandboxChanged = JSON.stringify(before.sandbox) !== JSON.stringify(next.sandbox)
       if (sandboxChanged) await configureSandbox(next.sandbox)
       if (JSON.stringify(before.remote) !== JSON.stringify(next.remote)) await syncRemote(next.remote)
-      // Settings that feed opencode.json (default model/mode, sandbox on/off → `shell`) are re-applied.
+      // Settings that feed opencode.json (default model/mode, sandbox on/off → `shell`, the vision agent) are
+      // re-applied.
       const shellToggled = sandboxChanged && (before.sandbox.mode === "off") !== (next.sandbox.mode === "off")
       if (
         before.defaultModel !== next.defaultModel ||
         before.defaultMode !== next.defaultMode ||
-        shellToggled
+        shellToggled ||
+        JSON.stringify(before.imageFallback) !== JSON.stringify(next.imageFallback)
       )
         await applyConfig()
     },

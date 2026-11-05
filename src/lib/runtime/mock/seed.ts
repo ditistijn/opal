@@ -485,6 +485,7 @@ export function makeSeed(now = Date.now()): MockSeed {
     sandbox: { mode: "filesystem", allowPaths: [] },
     remote: { enabled: false, lan: true },
     updates: { autoCheck: true },
+    imageFallback: { enabled: true },
   }
 
   return {

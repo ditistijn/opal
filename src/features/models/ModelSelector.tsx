@@ -27,6 +27,13 @@ export interface ModelSelectorProps {
   onManageModels?(): void
   className?: string
   align?: "start" | "center" | "end"
+  /** Narrows the offered models (e.g. image-capable only). */
+  filter?(model: ModelInfo): boolean
+  /**
+   * Shown when nothing is selected. Passing it also stops an unset `value` from showing the default model
+   * (default "Select model", with the default model as fallback).
+   */
+  placeholder?: string
 }
 
 interface Group {
@@ -43,6 +50,8 @@ export function ModelSelector({
   onManageModels,
   className,
   align = "start",
+  filter,
+  placeholder,
 }: ModelSelectorProps) {
   const models = runtime.useModels()
   const providers = runtime.useProviders()
@@ -57,13 +66,18 @@ export function ModelSelector({
   const listID = useId()
 
   const current: ModelRef | undefined =
-    (sessionID ? session?.model : undefined) ?? value ?? settings.defaultModel
+    (sessionID ? session?.model : undefined) ??
+    value ??
+    (placeholder === undefined ? settings.defaultModel : undefined)
 
   const providerNames = useMemo(
     () => new Map(providers.map((provider) => [provider.id, provider.name])),
     [providers],
   )
-  const available = useMemo(() => selectableModels(models), [models])
+  const available = useMemo(() => {
+    const list = selectableModels(models)
+    return filter ? list.filter(filter) : list
+  }, [models, filter])
   const showSearch = available.length > SEARCH_THRESHOLD
 
   const groups = useMemo<Group[]>(() => {
@@ -150,7 +164,7 @@ export function ModelSelector({
         <Popover.Trigger asChild>
           <button
             type="button"
-            aria-label={currentName ? `Model: ${currentName}` : "Select model"}
+            aria-label={currentName ? `Model: ${currentName}` : (placeholder ?? "Select model")}
             aria-haspopup="listbox"
             className={cn(
               "inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-md text-fg-secondary transition-fast hover:bg-bg-muted hover:text-fg data-[state=open]:bg-bg-muted data-[state=open]:text-fg",
@@ -160,7 +174,7 @@ export function ModelSelector({
               className,
             )}
           >
-            <span className="truncate font-medium">{currentName ?? "Select model"}</span>
+            <span className="truncate font-medium">{currentName ?? placeholder ?? "Select model"}</span>
             {!compact && currentProvider && <span className="truncate text-fg-muted">{currentProvider}</span>}
             <ChevronDown className="size-3.5 shrink-0 text-fg-muted" />
           </button>

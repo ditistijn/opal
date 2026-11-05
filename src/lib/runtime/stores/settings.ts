@@ -21,6 +21,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   sandbox: { mode: "filesystem", allowPaths: [] },
   remote: { enabled: false, lan: true },
   updates: { autoCheck: true },
+  imageFallback: { enabled: true },
 }
 
 const SANDBOX_MODES = ["off", "filesystem", "strict"] as const
@@ -60,6 +61,20 @@ export function normalizeSettings(raw: unknown): AppSettings {
       lan: value.remote?.lan !== false,
     },
     updates: { autoCheck: value.updates?.autoCheck !== false },
+    imageFallback: normalizeImageFallback(value.imageFallback),
+  }
+}
+
+function normalizeImageFallback(
+  raw: Partial<AppSettings["imageFallback"]> | undefined,
+): AppSettings["imageFallback"] {
+  const model = raw?.model
+  const valid = !!model && typeof model.providerID === "string" && typeof model.id === "string"
+  return {
+    enabled: raw?.enabled !== false,
+    ...(valid && model.providerID && model.id
+      ? { model: { providerID: model.providerID, id: model.id } }
+      : {}),
   }
 }
 

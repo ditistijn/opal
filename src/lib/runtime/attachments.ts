@@ -7,6 +7,7 @@
  * every other file is referenced in the prompt text by its sandbox path so the agent reads it with
  * its tools. Browser: media becomes data: URIs; small text files are inlined into the prompt.
  */
+import { isRasterImage, visionNote } from "@/lib/config/vision"
 import { isTauri } from "@/lib/utils"
 import type { AttachmentRef, DroppedFile, PromptInput } from "./contracts"
 import type { OpalPromptMetadata } from "./map"
@@ -83,15 +84,26 @@ export function withAttachmentNote(text: string, lines: string[], intro: string)
   return `${text}\n\n<user_attachments>\n${intro}\n${lines.join("\n")}\n</user_attachments>`
 }
 
+export interface ImageRouting {
+  /** The session's model accepts image input (default true). */
+  imageInput?: boolean
+  /** The "vision" helper agent exists (src/lib/config/vision.ts). */
+  visionHelper?: boolean
+}
+
 /**
  * @param uploadKey  conversation folder key (session id) under conversations/
  * @param relativeTo the session directory when it is that conversation folder (paths are then relative)
+ * @param routing    when the model can't see images, they are referenced by path for the vision helper
+ *                   instead of being sent as file parts
  */
 export async function preparePrompt(
   input: PromptInput,
   uploadKey: string,
   relativeTo?: string,
+  routing: ImageRouting = {},
 ): Promise<PreparedPrompt> {
+  const blind = routing.imageInput === false
   const dropped = input.files ?? []
   const prepared: PreparedPrompt = {
     text: input.text,
@@ -111,13 +123,16 @@ export async function preparePrompt(
       byPath.map((f) => f.path!),
       inlinePayload(byBytes.map((f) => ({ name: f.name, bytes: f.bytes }))),
     )
+    let hiddenImages = 0
     ;[...byPath, ...byBytes].forEach((file, i) => {
       const entry = entries[i]
       if (!entry) return
       const mime = guessMime(file)
       const ref: AttachmentRef = { name: file.name, mime, uri: fileURL(entry.path), size: entry.size }
       prepared.attachments.push(ref)
-      if (isMedia(mime)) prepared.files.push({ uri: ref.uri!, name: file.name })
+      const hidden = blind && isRasterImage(mime)
+      if (hidden) hiddenImages++
+      if (isMedia(mime) && !hidden) prepared.files.push({ uri: ref.uri!, name: file.name })
       else {
         pathAttachments.push(ref)
         const shown = relativeTo && entry.path.startsWith(relativeTo + "/") ? entry.name : entry.path
@@ -126,6 +141,7 @@ export async function preparePrompt(
         )
       }
     })
+    if (hiddenImages) notes.push("", visionNote(routing.visionHelper === true))
     prepared.text = withAttachmentNote(
       input.text,
       notes,
@@ -133,7 +149,8 @@ export async function preparePrompt(
     )
   } else {
     // LIMITATION: the plain-browser build cannot write into the sandbox; media is sent inline and
-    // small text files are inlined into the prompt, larger non-media files are only named.
+    // small text files are inlined into the prompt, larger non-media files are only named. Images have no
+    // path the vision helper could read, so they are sent inline even to a model without image input.
     for (const file of dropped) {
       const mime = guessMime(file)
       const size = file.size ?? file.bytes?.length

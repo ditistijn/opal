@@ -3,6 +3,7 @@ import { useStore } from "zustand"
 import { createStore } from "zustand/vanilla"
 import { whenReady } from "@/lib/opencode/client"
 import type { AgentInfo, ModelInfo, OpenCodeEvent, ProviderInfo } from "@/lib/opencode/types"
+import { pickVisionModel } from "@/lib/config/vision"
 import { getSettings, updateSettings } from "./settings"
 
 interface CatalogState {
@@ -55,6 +56,7 @@ export function refreshCatalog(): Promise<void> {
           loaded: true,
         })
         await ensureDefaultModel(models.data, () => client.model.default())
+        await ensureImageFallbackModel(models.data)
       } while (again)
     } finally {
       inflight = undefined
@@ -80,6 +82,21 @@ async function ensureDefaultModel(
   const pick = fallback ?? models.find((m) => m.enabled) ?? models[0]
   if (!pick) return
   await updateSettings({ defaultModel: { providerID: pick.providerID, id: pick.id } })
+}
+
+/**
+ * The image fallback (src/lib/config/vision.ts) needs an image-capable model. When none is set, or the set one is
+ * gone or lost image input, adopt one from the catalog and regenerate opencode.json so the vision agent exists.
+ */
+async function ensureImageFallbackModel(models: readonly ModelInfo[]) {
+  const settings = getSettings()
+  if (!settings.imageFallback.enabled || !models.length) return
+  const current = settings.imageFallback.model
+  const pick = pickVisionModel(models, current, settings.defaultModel)
+  if (!pick || (current && current.providerID === pick.providerID && current.id === pick.id)) return
+  await updateSettings({ imageFallback: { ...settings.imageFallback, model: pick } })
+  // Lazy: providers.ts imports this module. applyConfig refreshes the catalog again, which is then a no-op here.
+  void import("../providers").then((m) => m.applyConfig()).catch(() => undefined)
 }
 
 let debounce: ReturnType<typeof setTimeout> | undefined

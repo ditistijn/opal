@@ -360,6 +360,22 @@ export interface AppSettings {
   updates: UpdateSettings
 }
 
+// ---- image fallback ----
+// Images dropped into a chat whose model has no image input go to a "vision" subagent pinned to an
+// image-capable model (src/lib/config/vision.ts; docs/PROVIDERS.md "Image fallback").
+
+export interface ImageFallbackSettings {
+  /** Route images through the vision helper when the chat's model can't see them. */
+  enabled: boolean
+  /** The image-capable model the helper runs on; adopted from the live catalog when unset. */
+  model?: ModelRef
+}
+
+// Declaration merging: part of AppSettings.
+export interface AppSettings {
+  imageFallback: ImageFallbackSettings
+}
+
 /** cmd_sandbox_status */
 export interface SandboxStatus {
   /** /usr/bin/sandbox-exec exists and the wrapper shell is installed. */

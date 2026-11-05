@@ -197,6 +197,7 @@ describe.skipIf(!available)("sandbox shell (sandbox-exec)", () => {
           sandbox: { mode: "filesystem", allowPaths: [] },
           remote: { enabled: false, lan: true },
           updates: { autoCheck: true },
+          imageFallback: { enabled: true },
         },
         prompts: { artifact: "a", code: "c", general: "g", research: "r" },
         sandboxShellPath: wrapper.shell,

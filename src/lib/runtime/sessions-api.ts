@@ -1,4 +1,5 @@
 /** Session-level operations of the Runtime contract. */
+import { VISION_AGENT_ID, modelSeesImages } from "@/lib/config/vision"
 import { whenReady } from "@/lib/opencode/client"
 import { remoteConversationsDir } from "@/lib/opencode/remote-pairing"
 import { identifier, newSessionID } from "@/lib/opencode/ids"
@@ -9,7 +10,7 @@ import type { ChatMessage, ModeID, OpalSessionMetadata, PromptInput, Surface } f
 import { PROJECT_KEY, SANDBOX_KEY, projectInstructions, sandboxInstructions } from "./instructions"
 import { native } from "./native"
 import { armWatchdog, getActivity, limiter, releaseSession } from "./stores/activity"
-import { hasAgent } from "./stores/catalog"
+import { catalogStore, hasAgent } from "./stores/catalog"
 import {
   dropMessages,
   fetchAllMessages,
@@ -251,7 +252,10 @@ function submit(sessionID: string, submission: Submission): Promise<void> {
 export async function sendPrompt(sessionID: string, input: PromptInput) {
   const session = await requireSession(sessionID)
   const directory = getOpalMetadata(session).directory
-  const prepared = await preparePrompt(input, sessionID, isOwnSandbox(session) ? directory : undefined)
+  const prepared = await preparePrompt(input, sessionID, isOwnSandbox(session) ? directory : undefined, {
+    imageInput: modelSeesImages(catalogStore.getState().models, session.model ?? getSettings().defaultModel),
+    visionHelper: getSettings().imageFallback.enabled && hasAgent(VISION_AGENT_ID),
+  })
   const id = newMessageID()
   const local: ChatMessage = {
     id,
