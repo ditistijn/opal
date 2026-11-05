@@ -6,6 +6,16 @@ All notable changes to Opal are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.2] — 2026-11-05
+
+### Added
+
+- **Image fallback**: images dropped into a chat whose model can't see images are now handed to a
+  read-only "vision" helper running on an image-capable model, which looks at them and answers in
+  text. Turn it on or off and pick the model under Settings › General › Image fallback; by default
+  Opal picks a vision model from your configured providers. The composer shows a note when
+  attached images will go to the fallback model.
+
 ## [0.1.1] — 2026-11-05
 
 ### Fixed
