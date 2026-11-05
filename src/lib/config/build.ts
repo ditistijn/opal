@@ -24,6 +24,7 @@
 import type { AppSettings, ModeID, ModelConfig, ProviderConfig } from "@/lib/runtime/contracts"
 import { MODE_IDS, MODES } from "./prompts"
 import { formatModelRef, isValidModelID, sanitizeProviderID } from "./ids"
+import { VISION_AGENT_DESCRIPTION, VISION_AGENT_ID, VISION_SYSTEM_PROMPT, visionAgentModel } from "./vision"
 
 export interface BuildInput {
   settings: AppSettings
@@ -74,9 +75,11 @@ export type OpenCodeProviderEntry = {
 }
 
 export type OpenCodeAgentEntry = {
+  /** "providerID/modelID" — pins the agent to a model (used by the vision subagent). */
+  model?: string
   system: string
   description: string
-  mode: "primary" | "all"
+  mode: "primary" | "all" | "subagent"
   color: string
   permissions: PermissionRule[]
 }
@@ -88,7 +91,7 @@ export type OpenCodeConfig = {
   share: "disabled"
   update: "disable"
   providers: Record<string, OpenCodeProviderEntry>
-  agents: Record<ModeID, OpenCodeAgentEntry>
+  agents: Record<ModeID, OpenCodeAgentEntry> & { [VISION_AGENT_ID]?: OpenCodeAgentEntry }
   policies?: { action: "provider.use"; resource: string; effect: "deny" }[]
   experimental: { artifacts: true; subagent_depth: number }
   shell?: string
@@ -139,9 +142,11 @@ export function buildOpenCodeConfig(input: BuildInput, options: BuildOptions = {
     .sort()
     .map((resource) => ({ action: "provider.use" as const, resource, effect: "deny" as const }))
 
-  const agents = Object.fromEntries(
+  const agents: OpenCodeConfig["agents"] = Object.fromEntries(
     MODE_IDS.map((mode) => [mode, agentEntry(mode, prompts[mode], settings)]),
   ) as Record<ModeID, OpenCodeAgentEntry>
+  const visionModel = visionAgentModel(settings, new Set(disabledIDs))
+  if (visionModel) agents[VISION_AGENT_ID] = visionAgentEntry(visionModel)
 
   const config: OpenCodeConfig = {
     $schema: CONFIG_SCHEMA_URL,
@@ -306,6 +311,28 @@ export function agentPermissions(mode: ModeID, settings: Pick<AppSettings, "code
 
 function rule(action: string, resource: string, effect: PermissionEffect): PermissionRule {
   return { action, resource, effect }
+}
+
+/**
+ * The image-fallback helper (src/lib/config/vision.ts): read-only, pinned to the fallback model. It may read
+ * any conversation's uploads (Code sessions keep uploads outside the repo); everything else outside asks.
+ */
+export function visionAgentEntry(model: string): OpenCodeAgentEntry {
+  return {
+    model,
+    system: VISION_SYSTEM_PROMPT,
+    description: VISION_AGENT_DESCRIPTION,
+    mode: "subagent",
+    color: "#6A8CAF",
+    permissions: [
+      { action: "execute", resource: "*", effect: "deny" },
+      { action: "edit", resource: "*", effect: "deny" },
+      { action: "shell", resource: "*", effect: "deny" },
+      { action: "subagent", resource: "*", effect: "deny" },
+      { action: "external_directory", resource: "*", effect: "ask" },
+      { action: "external_directory", resource: "*/conversations/*/uploads/*", effect: "allow" },
+    ],
+  }
 }
 
 function agentEntry(mode: ModeID, system: string, settings: AppSettings): OpenCodeAgentEntry {

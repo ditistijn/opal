@@ -67,6 +67,13 @@ export interface FakeProvider {
   requests: RecordedRequest[]
   /** Text the next completions return (default "OK"). */
   reply: string
+  /**
+   * Optional per-request script (streaming only): return a tool call to make the model call a tool, text to
+   * reply with, or undefined to fall back to `reply`.
+   */
+  script?(
+    body: Record<string, unknown>,
+  ): { toolCall: { name: string; arguments: unknown } } | { text: string } | undefined
   close(): Promise<void>
 }
 
@@ -106,13 +113,41 @@ export async function startFakeProvider(): Promise<FakeProvider> {
       }
       const model = typeof body.model === "string" ? body.model : "fake-model"
       const usage = { prompt_tokens: 12, completion_tokens: 3, total_tokens: 15 }
+      const scripted = body.stream ? fake.script?.(body) : undefined
+      if (scripted && "toolCall" in scripted) {
+        res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache" })
+        res.write(chunk(model, { role: "assistant", content: null }, null))
+        res.write(
+          chunk(
+            model,
+            {
+              tool_calls: [
+                {
+                  index: 0,
+                  id: `call_${fake.requests.length}`,
+                  type: "function",
+                  function: {
+                    name: scripted.toolCall.name,
+                    arguments: JSON.stringify(scripted.toolCall.arguments),
+                  },
+                },
+              ],
+            },
+            null,
+          ),
+        )
+        res.write(chunk(model, {}, "tool_calls", usage))
+        res.end("data: [DONE]\n\n")
+        return
+      }
+      const reply = scripted && "text" in scripted ? scripted.text : fake.reply
       if (body.stream) {
         res.writeHead(200, {
           "content-type": "text/event-stream",
           "cache-control": "no-cache",
           connection: "keep-alive",
         })
-        const words = fake.reply.split(/(?<= )/)
+        const words = reply.split(/(?<= )/)
         res.write(chunk(model, { role: "assistant", content: "" }, null))
         for (const word of words) res.write(chunk(model, { content: word }, null))
         res.write(chunk(model, {}, "stop", usage))

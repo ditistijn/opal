@@ -130,6 +130,27 @@ Choose **Custom** for any OpenAI-compatible endpoint, such as vLLM, llama.cpp se
 LiteLLM, or a company gateway. Enter the base URL that ends before `/chat/completions`
 (usually `…/v1`). Add any extra headers, then fetch or type models.
 
+## Image fallback
+
+Some chat models (GLM-5.3, most local models) cannot take image input. When you drop an image
+into a chat that uses one of these models, Opal does not send the image to it. The image is
+saved in the conversation's `uploads/` folder as usual, and the prompt tells the model to call
+OpenCode's `subagent` tool with `agent: "vision"`. That helper is a read-only subagent pinned
+to an image-capable model. It opens the image with the `read` tool and answers in text, for
+example with a description or a transcription of the text in the image.
+
+- **Settings → General → Image fallback** turns the feature on or off and chooses the model.
+  When none is set, Opal picks a vision model from the live catalog. It prefers one from your
+  default model's provider. The model must accept images and support tool calls.
+- A model counts as image-capable when its capabilities list `image` input. For custom
+  providers that is the **Vision** checkbox in the models table.
+- The composer shows a note under attached images when the current model can't see them.
+- Code (`src/lib/config/vision.ts`, `build.ts` `visionAgentEntry`): the vision agent is written
+  to `opencode.json` only when a fallback model is set and its provider is enabled. It can read
+  any conversation's `uploads/` folder. Reads elsewhere outside the session folder still ask
+  first, and edit and shell are denied.
+- LIMITATION: the plain-browser build has no saved upload path, so it still sends images inline.
+
 ## Troubleshooting
 
 - **"Couldn't reach …"**: in the desktop app, model discovery goes through Opal's Rust core

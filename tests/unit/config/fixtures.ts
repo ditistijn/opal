@@ -56,6 +56,7 @@ export function fixtureSettings(overrides: Partial<AppSettings> = {}): AppSettin
     sandbox: { mode: "filesystem", allowPaths: [] },
     remote: { enabled: false, lan: true },
     updates: { autoCheck: true },
+    imageFallback: { enabled: true },
     ...overrides,
   }
 }

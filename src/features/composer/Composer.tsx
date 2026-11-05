@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { AttachMenu } from "./AttachMenu"
 import { AttachmentChip } from "./AttachmentChip"
 import { EMPTY_FILES, fileToDropped, useDrafts } from "./drafts"
+import { ImageFallbackHint } from "./ImageFallbackHint"
 import { ModePicker } from "./ModePicker"
 
 export interface ComposerProps {
@@ -99,6 +100,7 @@ export function Composer({
             ))}
           </div>
         ) : null}
+        {files.length ? <ImageFallbackHint files={files} sessionID={sessionID} model={model} /> : null}
         <textarea
           ref={ref}
           rows={1}

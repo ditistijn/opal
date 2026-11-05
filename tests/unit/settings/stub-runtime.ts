@@ -46,6 +46,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   sandbox: { mode: "filesystem", allowPaths: [] },
   remote: { enabled: false, lan: true },
   updates: { autoCheck: true },
+  imageFallback: { enabled: true },
 }
 
 export interface StubState {
